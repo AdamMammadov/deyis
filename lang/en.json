@@ -1,0 +1,20 @@
+{
+  "app.title": "UrbanFlow – Smart City Transport",
+  "menu.dashboard": "Dashboard",
+  "menu.routes": "Routes",
+  "menu.services": "Services",
+  "menu.stats": "Statistics",
+  "menu.alerts": "Alerts",
+  "menu.profile": "Profile",
+  "menu.contact": "Contact",
+  "menu.about": "About",
+  "auth.login": "Login",
+  "auth.register": "Register",
+  "auth.logout": "Logout",
+  "auth.email": "Email",
+  "auth.password": "Password",
+  "auth.haveAccount": "Already have an account?",
+  "auth.noAccount": "Don’t have an account?",
+  "auth.successLogin": "Login successful!",
+  "auth.successRegister": "Registration successful!"
+}

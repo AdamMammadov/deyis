@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UrbanFlow — Auth</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="dashboard" href="dashboard.html">
+  <style>
+    body { font-family: sans-serif; background: #f5f7fa; margin: 0; }
+    .auth-container {
+      max-width: 400px; margin: 80px auto; padding: 30px;
+      background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h2 { text-align: center; margin-bottom: 20px; }
+    form { display: flex; flex-direction: column; gap: 12px; }
+    input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+    button {
+      padding: 10px; border: none; border-radius: 4px;
+      background: #1976d2; color: #fff; font-weight: bold; cursor: pointer;
+    }
+    button:hover { background: #1565c0; }
+    .switch-link { text-align: center; margin-top: 10px; font-size: 0.9em; }
+    .switch-link a { color: #1976d2; cursor: pointer; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <h2 id="authTitle">Login</h2>
+    <form id="authForm">
+      <input type="email" id="authEmail" placeholder="Email" required>
+      <input type="password" id="authPassword" placeholder="Password" required minlength="6">
+      <button type="submit" id="authSubmit">Login</button>
+    </form>
+    <div class="switch-link">
+      <span id="switchText">Hesabın yoxdur?</span>
+      <a id="switchLink">Qeydiyyatdan keç</a>
+    </div>
+  </div>
+
+  <!-- Firebase + Auth -->
+  <script type="module" src="js/firebase-init.js"></script>
+  <script src="js/auth.js"></script>
+
+
+  <!-- Only use the compat SDKs, and use the same version for all -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
+
+  <!-- Your Firebase init script -->
+  <script src="firebase-init.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("authForm");
+      const emailEl = document.getElementById("authEmail");
+      const passEl = document.getElementById("authPassword");
+      const submitBtn = document.getElementById("authSubmit");
+      const authTitle = document.getElementById("authTitle");
+      const switchText = document.getElementById("switchText");
+      const switchLink = document.getElementById("switchLink");
+
+      let mode = "login";
+
+      switchLink.addEventListener("click", () => {
+        if (mode === "login") {
+          mode = "register";
+          authTitle.textContent = "Qeydiyyat";
+          submitBtn.textContent = "Qeydiyyatdan keç";
+          switchText.textContent = "Artıq hesabın var?";
+          switchLink.textContent = "Daxil ol";
+        } else {
+          mode = "login";
+          authTitle.textContent = "Login";
+          submitBtn.textContent = "Login";
+          switchText.textContent = "Hesabın yoxdur?";
+          switchLink.textContent = "Qeydiyyatdan keç";
+        }
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = emailEl.value.trim();
+        const password = passEl.value.trim();
+        if (!email || !password) return;
+
+        const api = window.urbanflowFirebase;
+        try {
+          if (mode === "login") {
+            await api.signIn(email, password);
+            alert("✅ Giriş uğurlu!");
+          } else {
+            await api.signUp(email, password);
+            alert("✅ Qeydiyyat uğurlu!");
+          }
+          window.location.href = "dashboard.html";
+        } catch (err) {
+          alert("❌ Xəta: " + err.message);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

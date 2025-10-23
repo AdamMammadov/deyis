@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title data-i18n="title">Admin Dashboard — UrbanFlow</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel ="stylesheet" href="auth.html" />
+  <style>
+    /* dashboard-specific */
+    .admin-grid{display:grid;grid-template-columns:1fr 420px;gap:14px;padding:16px}
+    .panel.small{padding:12px}
+    .traffic-list{max-height:360px;overflow:auto}
+    .traffic-row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee}
+    .btn-ghost{background:transparent;color:var(--accent);border:1px dashed var(--accent);padding:6px 8px;border-radius:6px}
+    .danger{background:#e02424;color:#fff}
+    .muted{color:var(--muted);font-size:0.9rem}
+    .controls-top{display:flex;gap:10px;align-items:center}
+    .lang-select{padding:6px;border-radius:6px}
+    .form-row{display:flex;gap:8px}
+    .form-row input, .form-row select{flex:1}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">UrbanFlow</div>
+    <div class="controls controls-top">
+      <select id="langSelect" class="lang-select" aria-label="language"></select>
+      <button id="go-site" class="btn-ghost" data-i18n="open_site">Saytı aç</button>
+      <button id="logout" class="btn-ghost" data-i18n="logout">Çıxış</button>
+    </div>
+  </header>
+
+  <main class="container" style="padding:12px">
+    <h1 data-i18n="admin_title">İdarəetmə Paneli</h1>
+    <div class="admin-grid">
+      <section class="panel">
+        <h3 data-i18n="traffic_management">Trafik Məlumatları</h3>
+
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input id="filterText" placeholder="Filter (ad və ya səviyyə)" style="flex:1;padding:8px;border-radius:6px;border:1px solid #ddd" />
+          <button id="btn-refresh" class="btn-ghost" data-i18n="refresh">Yenilə</button>
+        </div>
+
+        <div class="traffic-list" id="trafficList" aria-live="polite"></div>
+
+        <hr/>
+        <h4 data-i18n="add_traffic">Yeni Trafik Qeydiyyatı əlavə et</h4>
+        <div>
+          <div class="form-row">
+            <input id="new-title" placeholder="Başlıq" />
+            <select id="new-level"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+          </div>
+          <div class="form-row" style="margin-top:8px">
+            <input id="new-lat" placeholder="lat (məs. 40.397)" />
+            <input id="new-lng" placeholder="lng (məs. 49.867)" />
+          </div>
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <input id="new-sev" type="number" min="1" max="10" placeholder="severity (1-10)" style="width:140px" />
+            <input id="new-desc" placeholder="Qısa təsvir" />
+            <button id="btn-add" class="btn-ghost">Əlavə et</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel small">
+        <h3 data-i18n="quick_ops">Sürətli Əməliyyatlar</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button id="btn-export" class="btn-ghost" data-i18n="export">Trafik eksport et (JSON)</button>
+          <button id="btn-clear-ov" class="btn-ghost danger" data-i18n="clear_override">Override sil</button>
+          <button id="btn-view-bookings" class="btn-ghost" data-i18n="view_bookings">Rezervasiyalara bax</button>
+        </div>
+
+        <hr/>
+        <h4 data-i18n="recent_bookings">Son rezervasiyalar</h4>
+        <div id="bookingsList" style="max-height:280px;overflow:auto"></div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <small>UrbanFlow — Copyright © 2025</small>
+  </footer>
+
+  
+  <!-- Only use the compat SDKs, and use the same version for all -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
+
+  <!-- Your Firebase init script -->
+  <script src="firebase-init.js"></script>
+
+  <!-- Firebase init -->
+  <script src="js/i18n.js"></script>
+  <script src="js/firebase-init.js"></script>
+  <script src="js/admin-dashboard.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // init
+    initI18n();
+    document.getElementById('go-site').addEventListener('click', () => {
+      window.open('index.html', '_blank');
+    });
+    document.getElementById('logout').addEventListener('click', () => {
+      logout();
+    });
+    checkAuth(true).then(loadDashboard); 
+  </script>
+
+</body>
+</html>

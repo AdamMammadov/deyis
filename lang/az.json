@@ -1,0 +1,20 @@
+{
+  "app.title": "UrbanFlow – Ağıllı Şəhər Nəqliyyatı",
+  "menu.dashboard": "Panel",
+  "menu.routes": "Marşrutlar",
+  "menu.services": "Servislər",
+  "menu.stats": "Statistika",
+  "menu.alerts": "Xəbərdarlıqlar",
+  "menu.profile": "Profil",
+  "menu.contact": "Əlaqə",
+  "menu.about": "Haqqımızda",
+  "auth.login": "Daxil ol",
+  "auth.register": "Qeydiyyat",
+  "auth.logout": "Çıxış",
+  "auth.email": "Email",
+  "auth.password": "Şifrə",
+  "auth.haveAccount": "Artıq hesabın var?",
+  "auth.noAccount": "Hesabın yoxdur?",
+  "auth.successLogin": "Giriş uğurlu!",
+  "auth.successRegister": "Qeydiyyat uğurlu!"
+}

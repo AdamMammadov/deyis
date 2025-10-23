@@ -1,0 +1,354 @@
+:root {
+  --bg: #f3f6fb;
+  --card: #fff;
+  --text: #111;
+  --accent: #0b3d91;
+  --muted: #666;
+  --glass: rgba(255, 255, 255, 0.6);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+  min-height: 100vh;
+}
+
+/* ---------- HEADER / TOPBAR ---------- */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: linear-gradient(90deg, #08306b, #0b3d91);
+  color: #fff;
+  position: relative;
+  z-index: 1000;
+}
+
+.topbar.brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.topbar.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar.controls a,
+.topbar.controls button {
+  color: #fff;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: 0.2s;
+}
+
+.topbar.controls a:hover,
+.topbar.controls button:hover {
+  text-decoration: underline;
+}
+
+/* Hamburger menyu düyməsi */
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  position: absolute;
+  right: 18px;
+  top: 10px;
+}
+
+/* ---------- MAIN LAYOUT ---------- */
+.container {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 18px;
+  padding: 18px;
+  align-items: start;
+}
+
+.panel {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 6px 18px rgba(11, 61, 145, 0.08);
+}
+
+.map-panel {
+  grid-column: 1 / 2;
+}
+
+.stats-panel {
+  grid-column: 2 / 3;
+}
+
+.cards {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.card {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--glass), #fff);
+  text-align: center;
+}
+
+.sidebar {
+  grid-row: 1/3;
+}
+
+.footer {
+  text-align: center;
+  padding: 16px;
+  background: #f0f4fa;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ---------- PANELS & CONTROLS ---------- */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.controls button {
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.services-list.service {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.small ul {
+  padding-left: 18px;
+}
+
+.routes-container {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 12px;
+  padding: 18px;
+}
+
+/* ---------- FORM STYLES ---------- */
+form label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+input,
+select,
+button {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+button {
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* ---------- DARK MODE ---------- */
+.dark {
+  --bg: #0e1724;
+  --card: #111827;
+  --text: #e6eef8;
+  --muted: #9aa7bf;
+  --accent: #0ea5a4;
+  background: var(--bg);
+}
+
+/* ---------- MODAL ---------- */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.modal-content {
+  background: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 6px;
+  width: 300px;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 8px;
+  margin: 8px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.modal-content button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+.close {
+  float: right;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* ---------- RESPONSIVE DESIGN ---------- */
+@media (max-width: 1000px) {
+.container {
+    grid-template-columns: 1fr;
+    padding: 12px;
+}
+
+.stats-panel {
+    order: 3;
+}
+
+.sidebar {
+    order: 2;
+}
+
+.cards {
+    flex-direction: column;
+}
+
+.routes-container {
+    grid-template-columns: 1fr;
+}
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 15px;
+    padding: 0 8px;
+}
+
+.topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 16px;
+}
+
+.menu-toggle {
+    display: block;
+}
+
+.topbar.controls {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    background: #0b3d91;
+    padding: 10px 0;
+    margin-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.topbar.controls.show {
+    display: flex;
+}
+
+.topbar.controls a,
+.topbar.controls button {
+    padding: 8px 0;
+    text-align: center;
+    width: 100%;
+}
+
+.panel {
+    padding: 14px;
+}
+
+.services-list.service {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.services-list.service button {
+    width: 100%;
+    margin-top: 8px;
+}
+
+  button, input, select {
+    width: 100%;
+}
+
+.cards {
+    flex-direction: column;
+}
+
+.footer {
+    font-size: 14px;
+}
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+}
+
+.topbar {
+    padding: 10px;
+}
+
+.topbar.brand {
+    font-size: 1rem;
+}
+
+.modal-content {
+    width: 90%;
+    margin-top: 30%;
+}
+
+.footer {
+    text-align: center;
+    font-size: 13px;
+}
+
+.cards {
+    gap: 6px;
+}
+
+.card {
+    font-size: 0.9rem;
+    padding: 10px;
+}
+}
+
+/* Smooth fade for modal */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px);}
+  to { opacity: 1; transform: translateY(0);}
+}

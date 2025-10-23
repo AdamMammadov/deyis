@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Servis Mərkəzləri — UrbanFlow</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">UrbanFlow</div>
+    <div class="controls">
+      <a href="index.html">Ana səhifə</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <h2>Servis mərkəzləri</h2>
+      <div id="services-list" class="services-list"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Rezervasiya</h2>
+      <form id="reserve-form">
+        <label>Servis:
+          <select id="service-select" required></select>
+        </label>
+        <label>Ad — Soyad:
+          <input id="cust-name" required />
+        </label>
+        <label>Tarix:
+          <input id="reserve-date" type="date" required />
+        </label>
+        <label>Saat:
+          <input id="reserve-time" type="time" required />
+        </label>
+        <button type="submit">Rezerv et</button>
+      </form>
+      <div id="reserve-result" style="margin-top:10px;font-weight:bold;"></div>
+    </section>
+  </main>
+
+  <!-- ✅ Firebase compat SDK-lar -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
+
+  <!-- ✅ Firebase init -->
+  <script src="js/firebase-init.js"></script>
+
+  <!-- ✅ Digər skriptlər -->
+  <script src="js/service.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/alerts.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/firestore-sync.js"></script>
+  <script src="js/speech.js"></script>
+  <script src="js/main.js"></script>
+
+  <script>
+  // ✅ Tam uyğunlaşdırılmış submit handler — makeReservation və ya undefined diaqnozu ilə
+  window.addEventListener('load', async () => {
+    console.log("✅ Səhifə tam yükləndi, Firebase yoxlanır...");
+
+    await new Promise(r => setTimeout(r, 600));
+
+    console.log("🔥 makeReservation tipi:", typeof window.makeReservation);
+    console.log("🔥 window.UFService varmı:", !!window.UFService);
+    console.log("🔥 urbanflowFirebase varmı:", !!window.urbanflowFirebase);
+
+    // Servisləri yüklə (əgər varsa)
+    if (typeof loadServicesUI === 'function') {
+      try { await loadServicesUI(); } catch (e) { console.warn("loadServicesUI xətası:", e); }
+    }
+
+    // 🔹 Rezerv submit
+    document.getElementById('reserve-form').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const id = document.getElementById('service-select').value;
+      const name = document.getElementById('cust-name').value.trim();
+      const date = document.getElementById('reserve-date').value;
+      const time = document.getElementById('reserve-time').value;
+
+      console.log("📝 Form submit edildi:", { id, name, date, time });
+
+      if (!id || !name || !date || !time) {
+        alert("⚠️ Zəhmət olmasa bütün xanaları doldurun!");
+        return;
+      }
+
+      try {
+        if (typeof window.makeReservation !== 'function') {
+          console.error("❌ makeReservation tapılmadı!");
+          document.getElementById('reserve-result').innerText =
+            "❌ Xəta: makeReservation funksiyası tapılmadı!";
+          return;
+        }
+
+        const res = await window.makeReservation({ serviceId: id, name, date, time });
+        console.log("🎯 makeReservation nəticəsi:", res);
+
+        if (!res) {
+          document.getElementById('reserve-result').innerText =
+            "❌ makeReservation nəticəsi undefined gəldi!";
+          return;
+        }
+
+        document.getElementById('reserve-result').innerHTML =
+          res.message || JSON.stringify(res);
+
+        if (res.ok && typeof speakText === 'function') {
+          speakText(`Rezervasiya uğurla yaradıldı. Təşəkkürlər, ${name}.`);
+        }
+      } catch (err) {
+        console.error("❌ Rezervasiya zamanı xəta:", err);
+        document.getElementById('reserve-result').innerText =
+          "❌ Xəta: " + (err.message || err);
+      }
+    });
+  });
+  </script>
+</body>
+</html>

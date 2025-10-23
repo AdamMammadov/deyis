@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>UrbanFlow — Ana Panel</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- AOS animations -->
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0b3d91" />
+</head>
+<body>
+  <header class="topbar" id="navbar">
+    <div class="brand" onclick="window.location.href='index.html'">UrbanFlow</div>
+    <button class="menu-toggle" onclick="document.querySelector('.topbar.controls').classList.toggle('show')">☰</button>
+    <div class="controls">
+      <a href="dashboard.html">Admin</a>
+      <a href="routes.html">Marşrut Planlayıcı</a>
+      <a href="services.html">Servislər</a>
+      <a href="stats.html">Qrafiklər</a>
+      <button id="authTrigger">Giriş</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel map-panel" data-aos="fade-up">
+      <div class="panel-header">
+        <h2>Canlı Xəritə</h2>
+        <div class="map-filters">
+          <label>Trafik səviyyəsi:
+            <select id="traffic-filter">
+              <option value="all">Hamısı</option>
+              <option value="low">Az</option>
+              <option value="medium">Orta</option>
+              <option value="high">Yüksək</option>
+            </select>
+          </label>
+          <button id="locate-btn">Məni göstər</button>
+        </div>
+      </div>
+      <div id="map" style="height:520px"></div>
+    </section>
+
+    <section class="panel stats-panel" data-aos="fade-left">
+      <div class="panel-header"><h2>Əsas göstəricilər</h2></div>
+      <div class="cards">
+        <div class="card"><h3>Aktiv Tıxaclar</h3><p id="active-jams">—</p></div>
+        <div class="card"><h3>Orta Sürət (km/h)</h3><p id="avg-speed">—</p></div>
+        <div class="card"><h3>Bildirişlər</h3><p id="alerts-count">—</p></div>
+      </div>
+      <canvas id="trafficChart" width="400" height="150"></canvas>
+    </section>
+
+    <aside class="panel sidebar" data-aos="fade-right">
+      <h3>Sürətli Əməliyyatlar</h3>
+      <button id="opt-route">AI ilə marşrut optimallaşdır</button>
+      <button id="open-reserve">Servis rezervasiya et</button>
+      <div class="small">
+        <h4>Son xəbərlər</h4>
+        <ul id="news-list"></ul>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <small>© 2025 UrbanFlow — Bütün hüquqlar qorunur</small>
+    </div>
+  </footer>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span id="authClose" class="close">&times;</span>
+      <h2>Giriş</h2>
+      <form id="authForm">
+        <input type="email" id="authEmail" placeholder="Email" required>
+        <input type="password" id="authPassword" placeholder="Şifrə" required>
+        <button type="submit" id="authSubmit">Daxil ol</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    AOS.init();
+
+    // Scroll davranışı üçün navbar sabit qalır
+    window.addEventListener('scroll', () => {
+      const navbar = document.getElementById('navbar');
+      if (window.scrollY> 50) {
+        navbar.style.position = 'fixed';
+        navbar.style.top = '0';
+        navbar.style.width = '100%';
+        navbar.style.zIndex = '1000';
+} else {
+        navbar.style.position = 'relative';
+}
+});
+
+    // Modal açılma
+    document.getElementById('authTrigger').addEventListener('click', () => {
+      document.getElementById('authModal').style.display = 'block';
+});
+
+    // Modal bağlanma
+    document.getElementById('authClose').addEventListener('click', () => {
+      document.getElementById('authModal').style.display = 'none';
+});
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('authModal');
+      if (event.target === modal) {
+        modal.style.display = 'none';
+}
+};
+  </script>
+</body>
+</html>

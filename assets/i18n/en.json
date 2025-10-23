@@ -1,0 +1,15 @@
+{
+  "title": "Admin Panel — UrbanFlow",
+  "open_site": "Open site",
+  "logout": "Logout",
+  "admin_title": "Administration Dashboard",
+  "traffic_management": "Traffic Data",
+  "refresh": "Refresh",
+  "add_traffic": "Add new traffic record",
+  "export": "Export traffic (JSON)",
+  "clear_override": "Clear override",
+  "view_bookings": "View bookings",
+  "recent_bookings": "Recent bookings",
+  "quick_ops": "Quick operations",
+  "footer": "Admin — UrbanFlow"
+}

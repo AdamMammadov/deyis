@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="az">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Marşrut Planlayıcı — UrbanFlow (Integrated)</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    /* minimal styles (you can move to css/style.css) */
+    body {
+      font-family: Inter, system-ui, Arial, sans-serif;
+      margin: 0;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(16, 24, 40, .04);
+    }
+
+    .brand {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .controls a {
+      color: #2563eb;
+      text-decoration: none;
+      margin-left: 8px;
+    }
+
+    .container {
+      display: flex;
+      gap: 16px;
+      padding: 18px;
+      max-width: 1200px;
+      margin: 18px auto;
+      box-sizing: border-box;
+    }
+
+    .routes-container {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+
+    .panel {
+      background: #fff;
+      padding: 14px;
+      border-radius: 10px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, .04);
+    }
+
+    .route-inputs {
+      width: 360px;
+    }
+
+    label {
+      display: block;
+      margin: 8px 0;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #e6edf3;
+      border-radius: 6px;
+      margin-top: 6px;
+    }
+
+    button {
+      padding: 10px 14px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #routeMap {
+      width: 760px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    #route-info {
+      margin-top: 12px;
+      font-size: 15px;
+    }
+
+    .muted {
+      color: #6b7280;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">UrbanFlow</div>
+    <div class="controls">
+      <a href="index.html">Ana Panel</a>
+    </div>
+  </header>
+
+  <main class="container routes-container">
+    <section class="panel route-inputs">
+      <h2>Marşrut tap</h2>
+      <label>Başlanğıc:
+        <input id="start" placeholder="Nümunə: 40.384,49.834" />
+      </label>
+      <label>Son:
+        <input id="end" placeholder="Nümunə: 40.409,49.867" />
+      </label>
+      <label>Prioritet:
+        <select id="route-priority">
+          <option value="fastest">Ən sürətli</option>
+          <option value="shortest">Ən qısa</option>
+          <option value="recommended">Tövsiyə edilən</option>
+        </select>
+      </label>
+      <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+        <button id="find-route">Yol tap</button>
+        <button id="btn-enable-push" style="background:#06b6d4">🔔 Bildiriş</button>
+      </div>
+      <div id="route-info" style="margin-top:10px;font-weight:600;"></div>
+      <div class="muted" style="margin-top:8px">Sınaq rejimi: ORS açarı yoxdursa nəticə simulasiya olacaq.</div>
+    </section>
+
+    <section class="panel route-map">
+      <div id="routeMap" style="height:600px"></div>
+    </section>
+  </main>
+
+
+  <!-- Only use the compat SDKs, and use the same version for all -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
+
+  <!-- Your Firebase init script -->
+  <script src="firebase-init.js"></script>
+
+
+  <!-- Leaflet and map init -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // js/map.js minimal: initSmallMap returns new or existing map at window.mainMap
+    function initSmallMap(containerId = 'routeMap') {
+      if (window.mainMap) return window.mainMap;
+      const map = L.map(containerId).setView([40.4093, 49.8671], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      window.mainMap = map;
+      return map;
+    }
+  </script>
+
+  <!-- ai-routing: uses ORS if key set else simulates straight-line route -->
+  <script>
+    // js/ai-routing.js
+    const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImJjNWE3YmE3MTM0YzQ1NjdiNTFjYjRiYWQxZjUzMjMwIiwiaCI6Im11cm11cjY0In0="; // <-- paste your ORS key string here if you want real routes
+
+    // helper: haversine distance (km)
+    function haversineKm(a, b) {
+      const R = 6371;
+      const toRad = Math.PI / 180;
+      const dLat = (b[0] - a[0]) * toRad;
+      const dLon = (b[1] - a[1]) * toRad;
+      const la = a[0] * toRad, lb = b[0] * toRad;
+      const aa = Math.sin(dLat / 2) ** 2 + Math.cos(la) * Math.cos(lb) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
+    }
+
+    // decode polyline (encoded geometry from ORS if needed) - ORS returns encoded? we handle both
+    function decodePolyline(str, precision = 5) {
+      if (!str) return [];
+      // if geometry is array already, return it
+      if (Array.isArray(str)) return str.map(c => [c[1], c[0]]);
+      let index = 0, lat = 0, lng = 0, coordinates = [];
+      const factor = Math.pow(10, precision);
+      while (index < str.length) {
+        let b, shift = 0, result = 0;
+        do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+        let deltaLat = (result & 1) ? ~(result >> 1) : (result >> 1);
+        lat += deltaLat;
+        shift = 0; result = 0;
+        do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+        let deltaLng = (result & 1) ? ~(result >> 1) : (result >> 1);
+        lng += deltaLng;
+        coordinates.push([lat / factor, lng / factor]);
+      }
+      return coordinates;
+    }
+
+    async function findOptimalRoute(startLatLng, endLatLng, options = {}, map = null) {
+      // startLatLng = [lat,lng], endLatLng likewise
+      // If ORS API key provided, call ORS directions; else simple straight-line polyline
+      if (ORS_API_KEY && ORS_API_KEY.length > 10) {
+        try {
+          const profile = options.profile || "driving-car";
+          const preference = (options.priority === 'shortest') ? 'shortest' : (options.priority === 'recommended' ? 'recommended' : 'fastest');
+          const body = {
+            coordinates: [
+              [startLatLng[1], startLatLng[0]],
+              [endLatLng[1], endLatLng[0]]
+            ],
+            preference,
+            instructions: true
+          };
+          const resp = await fetch(`https://api.openrouteservice.org/v2/directions/${profile}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': ORS_API_KEY },
+            body: JSON.stringify(body)
+          });
+          const data = await resp.json();
+          // handle data.routes[0]
+          const rt = data.routes && data.routes[0];
+          const geom = rt.geometry;
+          const path = Array.isArray(geom) ? decodePolyline(geom) : (rt.geometry && decodePolyline(rt.geometry) || []);
+          const distanceKm = (rt.summary && rt.summary.distance ? rt.summary.distance / 1000 : haversineKm(startLatLng, endLatLng));
+          const durationMin = (rt.summary && rt.summary.duration ? rt.summary.duration / 60 : (distanceKm / 40) * 60);
+          if (map) {
+            if (map._routeLayer) map.removeLayer(map._routeLayer);
+            map._routeLayer = L.polyline(path, { color: '#ff6b6b', weight: 6, opacity: 0.9 }).addTo(map);
+            map.fitBounds(map._routeLayer.getBounds(), { padding: [20, 20] });
+          }
+          return { path, distance: distanceKm, time: durationMin, raw: data };
+        } catch (err) {
+          console.warn('ORS call failed, fallback to simulated route', err);
+          // Continue to simulated path
+        }
+      }
+      // Simulated straight-line path
+      const distanceKm = haversineKm(startLatLng, endLatLng);
+      const avgSpeed = (options.priority === 'shortest') ? 50 : 40; // km/h
+      const durationMin = (distanceKm / avgSpeed) * 60;
+      const path = [startLatLng, [(startLatLng[0] + endLatLng[0]) / 2, (startLatLng[1] + endLatLng[1]) / 2], endLatLng];
+
+      if (map) {
+        if (map._routeLayer) map.removeLayer(map._routeLayer);
+        map._routeLayer = L.polyline(path, { color: '#ff6b6b', weight: 6, opacity: 0.9 }).addTo(map);
+        map.fitBounds(map._routeLayer.getBounds(), { padding: [20, 20] });
+      }
+
+      return { path, distance: distanceKm, time: durationMin, raw: null };
+    }
+  </script>
+
+  <!-- ai-traffic (simple local predictor) -->
+  <script>
+    // js/ai-traffic.js (non-module, global predictTraffic)
+    window.predictTraffic = async function (route, currentHour) {
+      // route: {distance, time} or from findOptimalRoute
+      // Basic heuristic-based predictor
+      const distance = route && route.distance ? route.distance : (route && route.raw && route.raw.summary ? route.raw.summary.distance / 1000 : 0);
+      const time = route && route.time ? route.time : (route && route.raw && route.raw.summary ? route.raw.summary.duration / 60 : 0);
+
+      let level = 'normal';
+      let delay = 0;
+
+      // Rush hours heuristics — morning (8-10), evening (17-19)
+      if ((currentHour >= 8 && currentHour <= 10) || (currentHour >= 17 && currentHour <= 19)) {
+        level = 'heavy';
+        delay = Math.round(time * 0.30); // +30%
+      } else if (currentHour >= 12 && currentHour <= 14) {
+        level = 'medium';
+        delay = Math.round(time * 0.15);
+      } else {
+        level = 'normal';
+        delay = Math.round(time * 0.05);
+      }
+
+      // distance factor (longer trips slightly higher delay)
+      if (distance > 20) delay += Math.round(distance * 0.2);
+
+      const recommended = (level === 'heavy') ? "Tövsiyə: Alternativ vaxt seçin və ya avtobus/metrodan istifadə edin." :
+        (level === 'medium') ? "Tövsiyə: Səfəri bir qədər gecikdirə bilərsiniz." :
+          "Yollar açıqdır — indi yola çıxa bilərsiniz.";
+
+      return { level, delay, recommended };
+    };
+  </script>
+
+  <!-- Text-to-Speech helper -->
+  <script>
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) return;
+      try {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'az-AZ';
+        utter.rate = 0.95;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utter);
+      } catch (e) { console.warn('TTS error', e); }
+    }
+  </script>
+
+  <!-- Optional: speech.js quick attach (if present) ensure it doesn't conflict) -->
+  <script>
+    // simple speech trigger — ensures script exists
+    (function () {
+      if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) return;
+      // topbar control will be created by speech.js if you have it; no-op here.
+    })();
+  </script>
+
+  <!-- Final page logic: wired find-route -->
+  <script>
+    document.getElementById('find-route').addEventListener('click', async () => {
+      // parse inputs
+      const s = document.getElementById('start').value.trim();
+      const e = document.getElementById('end').value.trim();
+      const p = document.getElementById('route-priority').value;
+
+      if (!s || !e) return alert('Başlanğıc və son nöqtələri daxil edin.');
+
+      const sLatLng = s.split(',').map(x => parseFloat(x.trim()));
+      const eLatLng = e.split(',').map(x => parseFloat(x.trim()));
+      if (sLatLng.length !== 2 || eLatLng.length !== 2 || sLatLng.some(isNaN) || eLatLng.some(isNaN))
+        return alert('Koordinat formatı: lat,lng (məs: 40.409,49.867)');
+
+      const map = initSmallMap('routeMap');
+
+      // show provisional message
+      const infoEl = document.getElementById('route-info');
+      infoEl.innerText = 'Marşrut hesablanır...';
+
+      const route = await findOptimalRoute([sLatLng[0], sLatLng[1]], [eLatLng[0], eLatLng[1]], { priority: p }, map);
+
+      if (route) {
+        const distance = route.distance || 0;
+        const time = route.time || 0;
+        const avgConsumption = 7; // L/100km
+        const emissionPerL = 2.31; // kg CO₂ / L
+        const fuel = (distance / 100) * avgConsumption;
+        const co2 = fuel * emissionPerL;
+
+        const now = new Date();
+        // use global predictTraffic (non-module)
+        const prediction = await window.predictTraffic(route, now.getHours());
+
+        infoEl.innerHTML = `
+  🚗 Marşrut: məsafə <b>${distance.toFixed(1)} km</b> · təxminən <b>${time.toFixed(0)} dəq</b><br/>
+  ⛽ Yanacaq sərfiyyatı: <b>${fuel.toFixed(1)} L</b><br/>
+  🌍 CO₂ emissiyası: <b>${co2.toFixed(1)} kg</b><br/>
+  🧠 <b>Trafik vəziyyəti:</b> ${prediction.level.toUpperCase()}<br/>
+  ⏱ <b>Gecikmə:</b> ${prediction.delay.toFixed(0)} dəq<br/>
+  💡 ${prediction.recommended}
+        `;
+
+        // speak summary
+        speakText(`Marşrut tapıldı. Məsafə ${distance.toFixed(1)} kilometr, təxminən ${time.toFixed(0)} dəqiqə. Trafik səviyyəsi ${prediction.level}, təxminən ${prediction.delay} dəqiqə gecikmə gözlənilir.`);
+
+        // optional: save to Firestore history if UFStats available
+        if (window.UFStats && typeof window.UFStats.saveRouteSearch === 'function') {
+          try {
+            UFStats.saveRouteSearch({
+              start: [sLatLng[0], sLatLng[1]],
+              end: [eLatLng[0], eLatLng[1]],
+              distance: distance,
+              time: time,
+              priority: p,
+              created: new Date().toISOString()
+            });
+          } catch (e) {
+            console.warn('saveRouteSearch failed', e);
+          }
+        }
+
+      } else {
+        infoEl.innerText = '❌ Marşrut tapılmadı.';
+      }
+    });
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,15 @@
+{
+  "title": "Панель администратора — UrbanFlow",
+  "open_site": "Открыть сайт",
+  "logout": "Выйти",
+  "admin_title": "Панель управления",
+  "traffic_management": "Данные трафика",
+  "refresh": "Обновить",
+  "add_traffic": "Добавить запись трафика",
+  "export": "Экспорт трафика (JSON)",
+  "clear_override": "Сбросить оверрайд",
+  "view_bookings": "Просмотреть брони",
+  "recent_bookings": "Последние брони",
+  "quick_ops": "Быстрые операции",
+  "footer": "Admin — UrbanFlow"
+}

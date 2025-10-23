@@ -1,0 +1,6 @@
+[
+  {"id":"t1","title":"Böyük prospekt","lat":40.401,"lng":49.857,"level":"high","severity":4,"description":"Ağırlıq: iş saatları tıxacı"},
+  {"id":"t2","title":"3-cü mikrorayon","lat":40.392,"lng":49.83,"level":"medium","severity":2,"description":"Yol işləri"},
+  {"id":"t3","title":"Sahil yolu","lat":40.400,"lng":49.883,"level":"low","severity":1,"description":"Axın normaldır"},
+  {"id":"t4","title":"Nizami küçəsi","lat":40.409,"lng":49.867,"level":"high","severity":5,"description":"Qəza nəticəsində tıxac"}
+]

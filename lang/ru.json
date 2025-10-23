@@ -1,0 +1,20 @@
+{
+  "app.title": "UrbanFlow – Умный Городской Транспорт",
+  "menu.dashboard": "Панель",
+  "menu.routes": "Маршруты",
+  "menu.services": "Сервисы",
+  "menu.stats": "Статистика",
+  "menu.alerts": "Оповещения",
+  "menu.profile": "Профиль",
+  "menu.contact": "Контакт",
+  "menu.about": "О нас",
+  "auth.login": "Войти",
+  "auth.register": "Регистрация",
+  "auth.logout": "Выйти",
+  "auth.email": "Эл. почта",
+  "auth.password": "Пароль",
+  "auth.haveAccount": "Уже есть аккаунт?",
+  "auth.noAccount": "Нет аккаунта?",
+  "auth.successLogin": "Вход выполнен!",
+  "auth.successRegister": "Регистрация успешна!"
+}

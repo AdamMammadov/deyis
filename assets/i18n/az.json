@@ -1,0 +1,15 @@
+{
+  "title": "Admin Panel — UrbanFlow",
+  "open_site": "Saytı aç",
+  "logout": "Çıxış",
+  "admin_title": "İdarəetmə Paneli",
+  "traffic_management": "Trafik Məlumatları",
+  "refresh": "Yenilə",
+  "add_traffic": "Yeni Trafik Qeydiyyatı əlavə et",
+  "export": "Trafik eksport et (JSON)",
+  "clear_override": "Override sil",
+  "view_bookings": "Rezervasiyalara bax",
+  "recent_bookings": "Son rezervasiyalar",
+  "quick_ops": "Sürətli Əməliyyatlar",
+  "footer": "Admin — UrbanFlow"
+}

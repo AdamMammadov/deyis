@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Statistika — UrbanFlow</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="topbar"><div class="brand">UrbanFlow</div><div class="controls"><a href="index.html">Ana</a></div></header>
+  <main class="container">
+    <section class="panel">
+      <h2>Trafik axını (son 24 saat)</h2>
+      <canvas id="flowChart" width="800" height="300"></canvas>
+    </section>
+    <section class="panel">
+      <h2>Servislərə sorğular</h2>
+      <canvas id="servicesChart" width="800" height="300"></canvas>
+    </section>
+  </main>
+
+  <script src="js/chart.js"></script>
+  <script>
+    loadStats();
+  </script>
+</body>
+</html>
