@@ -1,4 +1,4 @@
-// map.js — fixed + GPS-accurate user centering version
+// map.js — Final version with accurate GPS + IP fallback
 let mainMap;
 let markers = [];
 let userMarker = null;
@@ -38,18 +38,6 @@ async function initMainMap() {
   window.addEventListener("storage", (ev) => {
     if (ev.key === "urbanflow_refresh") {
       loadCombinedTraffic().then(populateTrafficMarkers);
-    }
-    if (ev.key === "urbanflow_focus") {
-      try {
-        const obj = JSON.parse(ev.newValue);
-        if (obj && obj.lat && obj.lng) {
-          mainMap.setView([obj.lat, obj.lng], 15, { animate: true });
-          L.popup()
-            .setLatLng([obj.lat, obj.lng])
-            .setContent(`<strong>${obj.title || "Point"}</strong>`)
-            .openOn(mainMap);
-        }
-      } catch (e) {}
     }
   });
 }
@@ -100,7 +88,9 @@ function populateTrafficMarkers(data) {
 function setupMapInteractions() {
   const locateBtn = document.getElementById("locate-btn");
   if (locateBtn) {
-    locateBtn.addEventListener("click", () => locateUser(true));
+    locateBtn.addEventListener("click", async () => {
+      await locateUser();
+    });
   }
 
   const filterEl = document.getElementById("traffic-filter");
@@ -114,53 +104,83 @@ function setupMapInteractions() {
   }
 }
 
-// === YENİ GPS FUNKSIYASI ===
-function locateUser(firstTry = false) {
+// GPS və IP ilə yer təyin edən funksiya
+async function locateUser() {
   if (!navigator.geolocation) {
     alert("Brauzeriniz mövqeyi müəyyən etməyi dəstəkləmir.");
     return;
   }
 
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      const acc = pos.coords.accuracy;
+  let found = false;
 
-      // dəqiqlik yoxlanışı
-      if (acc > 500 && firstTry) {
-        console.warn(`Aşağı dəqiqlik (${acc}m) — yenidən cəhd edilir...`);
-        setTimeout(() => locateUser(false), 1500);
-        return;
-      }
+  // 1️⃣ Əvvəlcə GPS ilə yoxla
+  await new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        found = true;
+        showUserOnMap(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+        resolve();
+      },
+      async () => {
+        console.warn("GPS mövqeyi alınmadı, IP-lə yoxlanılır...");
+        // 2️⃣ IP fallback
+        const ipLoc = await getApproxLocation();
+        if (ipLoc) {
+          found = true;
+          showUserOnMap(ipLoc.lat, ipLoc.lon, 1000, true);
+        }
+        resolve();
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+  });
 
-      const userLatLng = [lat, lng];
-      if (userMarker) mainMap.removeLayer(userMarker);
-      if (userCircle) mainMap.removeLayer(userCircle);
+  if (!found) {
+    alert("Mövqeyi təyin etmək mümkün olmadı. Zəhmət olmasa icazə verin və yenidən cəhd edin.");
+  }
+}
 
-      userMarker = L.marker(userLatLng, { title: "Sənin mövqeyin" }).addTo(mainMap);
-      userCircle = L.circle(userLatLng, {
-        radius: Math.min(acc, 100),
-        color: "#0b3d91",
-        fillColor: "#3b82f6",
-        fillOpacity: 0.3,
-      }).addTo(mainMap);
+// IP əsasında ehtiyat mövqe (free API)
+async function getApproxLocation() {
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    const data = await res.json();
+    if (data && data.latitude && data.longitude) {
+      return { lat: data.latitude, lon: data.longitude };
+    }
+  } catch (e) {
+    console.warn("IP geolocation uğursuz oldu:", e);
+  }
+  return null;
+}
 
-      mainMap.setView(userLatLng, 18, { animate: true });
+function showUserOnMap(lat, lng, acc = 100, fromIP = false) {
+  const userLatLng = [lat, lng];
 
-      L.popup()
-        .setLatLng(userLatLng)
-        .setContent("Hazırkı mövqeyin təyin olundu ✅")
-        .openOn(mainMap);
-    },
-    (err) => {
-      console.error("Geolocation error:", err);
-      alert(
-        "Mövqeyi təyin etmək mümkün olmadı. Zəhmət olmasa icazə verin və yenidən cəhd edin."
-      );
-    },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-  );
+  if (userMarker) mainMap.removeLayer(userMarker);
+  if (userCircle) mainMap.removeLayer(userCircle);
+
+  userMarker = L.marker(userLatLng, {
+    title: "Sənin mövqeyin",
+  }).addTo(mainMap);
+
+  userCircle = L.circle(userLatLng, {
+    radius: Math.min(acc, 150),
+    color: "#0b3d91",
+    fillColor: "#3b82f6",
+    fillOpacity: 0.3,
+  }).addTo(mainMap);
+
+  mainMap.setView(userLatLng, 17, { animate: true });
+
+  L.popup()
+    .setLatLng(userLatLng)
+    .setContent(
+      fromIP
+        ? "Təxmini mövqeyin təyin olundu 🌍 (IP əsasında)"
+        : "Hazırkı mövqeyin təyin olundu ✅"
+    )
+    .openOn(mainMap);
 }
 
 function initSmallMap(containerId) {
