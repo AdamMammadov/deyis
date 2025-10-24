@@ -1,4 +1,4 @@
-// map.js — fixed “Məni göstər” to focus on user accurately
+// map.js — full fixed version with exact user location centering
 let mainMap;
 let markers = [];
 let userMarker = null;
@@ -87,36 +87,44 @@ function setupMapInteractions() {
   const locateBtn = document.getElementById('locate-btn');
   if (locateBtn) {
     locateBtn.addEventListener('click', () => {
-      if (!mainMap) return;
-      mainMap.locate({ setView: false, watch: false });
+      if (!navigator.geolocation) {
+        alert("Brauzeriniz mövqeyi müəyyən etməyi dəstəkləmir.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const acc = pos.coords.accuracy;
+
+          const userLatLng = [lat, lng];
+
+          if (userMarker) mainMap.removeLayer(userMarker);
+          if (userCircle) mainMap.removeLayer(userCircle);
+
+          userMarker = L.marker(userLatLng, { title: "Sənin mövqeyin" }).addTo(mainMap);
+          userCircle = L.circle(userLatLng, {
+            radius: Math.min(acc, 150),
+            color: '#0b3d91',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.3
+          }).addTo(mainMap);
+
+          mainMap.setView(userLatLng, 17, { animate: true });
+
+          L.popup()
+            .setLatLng(userLatLng)
+            .setContent("Hazırkı mövqeyin təyin olundu ✅")
+            .openOn(mainMap);
+        },
+        () => {
+          alert("Mövqeyi təyin etmək mümkün olmadı. Zəhmət olmasa icazə verin və yenidən cəhd edin.");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
     });
   }
-
-  mainMap.on('locationfound', (e) => {
-    const radius = Math.min(e.accuracy, 200); // 200m-dən çox olmasın
-    if (userMarker) mainMap.removeLayer(userMarker);
-    if (userCircle) mainMap.removeLayer(userCircle);
-
-    userMarker = L.marker(e.latlng, { title: "Sənin mövqeyin" }).addTo(mainMap);
-    userCircle = L.circle(e.latlng, {
-      radius: radius,
-      color: '#0b3d91',
-      fillColor: '#3b82f6',
-      fillOpacity: 0.3
-    }).addTo(mainMap);
-
-    // yalnız həmin ərazini göstər
-    mainMap.setView(e.latlng, 17, { animate: true });
-
-    L.popup()
-      .setLatLng(e.latlng)
-      .setContent("Hazırkı mövqeyin təyin olundu ✅")
-      .openOn(mainMap);
-  });
-
-  mainMap.on('locationerror', () => {
-    alert("Mövqe təyin edilə bilmədi. Zəhmət olmasa icazə verin və yenidən cəhd edin.");
-  });
 
   const filterEl = document.getElementById('traffic-filter');
   if (filterEl) {
