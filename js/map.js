@@ -1,4 +1,4 @@
-// map.js — updated with accurate "Məni göstər" feature + improved map handling
+// map.js — fixed “Məni göstər” to focus on user accurately
 let mainMap;
 let markers = [];
 let userMarker = null;
@@ -18,9 +18,7 @@ function trafficColor(level) {
 async function loadCombinedTraffic() {
   const base = await fetchJSON('assets/data/traffic.json').catch(() => []);
   const override = JSON.parse(localStorage.getItem('urbanflow_traffic_override') || '[]');
-  base.forEach((b, i) => {
-    if (!b.id) b.id = 'base_' + i;
-  });
+  base.forEach((b, i) => { if (!b.id) b.id = 'base_' + i; });
   return [...base, ...override];
 }
 
@@ -53,7 +51,6 @@ async function initMainMap() {
 }
 
 function populateTrafficMarkers(data) {
-  // köhnə markerləri sil
   markers.forEach(m => mainMap.removeLayer(m));
   markers = [];
 
@@ -77,7 +74,6 @@ function populateTrafficMarkers(data) {
     markers.push(circle);
   });
 
-  // göstəriciləri yenilə
   const active = data.filter(d => d.level === 'high').length;
   const nonLow = data.filter(d => d.level !== 'low').length;
   const avgSpeed = Math.max(20, 60 - data.reduce((s, i) => s + ((i.severity || 1) * 5), 0));
@@ -92,25 +88,25 @@ function setupMapInteractions() {
   if (locateBtn) {
     locateBtn.addEventListener('click', () => {
       if (!mainMap) return;
-      mainMap.locate({ setView: true, maxZoom: 15, watch: false });
+      mainMap.locate({ setView: false, watch: false });
     });
   }
 
   mainMap.on('locationfound', (e) => {
-    const radius = e.accuracy;
+    const radius = Math.min(e.accuracy, 200); // 200m-dən çox olmasın
     if (userMarker) mainMap.removeLayer(userMarker);
     if (userCircle) mainMap.removeLayer(userCircle);
 
-    userMarker = L.marker(e.latlng, {
-      title: "Sənin mövqeyin"
-    }).addTo(mainMap);
-
+    userMarker = L.marker(e.latlng, { title: "Sənin mövqeyin" }).addTo(mainMap);
     userCircle = L.circle(e.latlng, {
       radius: radius,
       color: '#0b3d91',
       fillColor: '#3b82f6',
       fillOpacity: 0.3
     }).addTo(mainMap);
+
+    // yalnız həmin ərazini göstər
+    mainMap.setView(e.latlng, 17, { animate: true });
 
     L.popup()
       .setLatLng(e.latlng)
@@ -133,7 +129,6 @@ function setupMapInteractions() {
   }
 }
 
-// kiçik xəritə (digər səhifələrdə istifadə olunur)
 function initSmallMap(containerId) {
   const m = L.map(containerId).setView([40.395, 49.85], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(m);
