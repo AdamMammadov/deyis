@@ -1,419 +1,384 @@
 <!doctype html>
 <html lang="az">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Marşrut Planlayıcı — UrbanFlow (Autocomplete)</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Marşrut Planlayıcı — UrbanFlow (Professional)</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    /* --- Basic layout --- */
-    body{font-family:Inter,system-ui,Arial,sans-serif;margin:0;background:#f5f7fb;color:#111}
-    .topbar{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:#fff;box-shadow:0 2px 8px rgba(16,24,40,.04)}
-    .brand{font-weight:700;color:#0f172a;cursor:pointer}
-    .container{display:flex;gap:16px;padding:18px;max-width:1200px;margin:18px auto;box-sizing:border-box}
-    .panel{background:#fff;padding:14px;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,.04)}
-    .route-inputs{width:360px}
-    label{display:block;margin:8px 0;font-size:14px;color:#374151}
-    input,select{width:100%;padding:8px 10px;border:1px solid #e6edf3;border-radius:6px;margin-top:6px}
-    button{padding:10px 14px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer}
-    #routeMap{width:760px;border-radius:8px;overflow:hidden}
-    #route-info{margin-top:12px;font-size:15px}
-    .muted{color:#6b7280;font-size:13px}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <style>
+        body {
+            margin: 0;
+            font-family: Inter, sans-serif;
+            background: #f5f7fb;
+            color: #111;
+        }
 
-    /* --- autocomplete dropdown --- */
-    .autocomplete {
-      position: relative;
-    }
-    .suggestions {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: calc(100% + 6px);
-      background: #fff;
-      border: 1px solid #e6edf3;
-      border-radius: 8px;
-      box-shadow: 0 8px 28px rgba(2,6,23,0.08);
-      z-index: 1200;
-      max-height: 260px;
-      overflow: auto;
-    }
-    .suggestion {
-      padding: 10px 12px;
-      cursor: pointer;
-      font-size: 14px;
-      color: #0f172a;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    .suggestion:last-child { border-bottom: none; }
-    .suggestion:hover, .suggestion.active { background: #f1f5ff; }
-    .suggestion small { display:block; color:#64748b; margin-top:4px; font-size:12px; }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 18px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(16, 24, 40, .04);
+        }
 
-    /* responsive */
-    @media (max-width: 1000px) {
-      .container{flex-direction:column;padding:12px}
-      #routeMap{width:100%;height:420px}
-      .route-inputs{width:100%}
-    }
-  </style>
+        .brand {
+            font-weight: 700;
+            color: #0f172a;
+            cursor: pointer;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 18px;
+            max-width: 1200px;
+            margin: 18px auto;
+            box-sizing: border-box;
+        }
+
+        .panel {
+            background: #fff;
+            padding: 14px;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(2, 6, 23, .04);
+        }
+
+        .route-inputs {
+            width: 360px;
+        }
+
+        label {
+            display: block;
+            margin: 8px 0;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #e6edf3;
+            border-radius: 6px;
+            margin-top: 6px;
+        }
+
+        button {
+            padding: 10px 14px;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #routeMap {
+            width: calc(100% - 400px);
+            min-width: 300px;
+            border-radius: 8px;
+            height: 600px;
+        }
+
+        #route-info {
+            margin-top: 12px;
+            font-size: 15px;
+        }
+
+        .autocomplete {
+            position: relative;
+        }
+
+        .suggestions {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 6px);
+            background: #fff;
+            border: 1px solid #e6edf3;
+            border-radius: 8px;
+            box-shadow: 0 8px 28px rgba(2, 6, 23, 0.08);
+            z-index: 1200;
+            max-height: 260px;
+            overflow: auto;
+        }
+
+        .suggestion {
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #0f172a;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .suggestion:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion:hover,
+        .suggestion.active {
+            background: #f1f5ff;
+        }
+
+        .suggestion small {
+            display: block;
+            color: #64748b;
+            margin-top: 4px;
+            font-size: 12px;
+        }
+
+        @media (max-width:1000px) {
+            .container {
+                flex-direction: column;
+            }
+
+            #routeMap {
+                width: 100%;
+                height: 420px;
+            }
+
+            .route-inputs {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
+
 <body>
-  <header class="topbar">
-    <div class="brand" onclick="window.location.href='index.html'">UrbanFlow</div>
-    <div class="controls"><a href="index.html">Ana Panel</a></div>
-  </header>
+    <header class="topbar">
+        <div class="brand" onclick="window.location.href='index.html'">UrbanFlow</div>
+        <div class="controls"><a href="index.html">Ana Panel</a></div>
+    </header>
 
-  <main class="container routes-container">
-    <section class="panel route-inputs">
-      <h2>Marşrut tap (ünvanla — autocomplete)</h2>
+    <main class="container">
+        <section class="panel route-inputs">
+            <h2>Marşrut tap (profesional)</h2>
 
-      <label>Başlanğıc:
-        <div class="autocomplete">
-          <input id="start" placeholder="Məs: Nizami küçəsi, Bakı və ya sahə/obyekt" autocomplete="off" />
-          <div id="start-suggestions" class="suggestions" hidden></div>
-        </div>
-      </label>
+            <label>Başlanğıc:
+                <div class="autocomplete">
+                    <input id="start" placeholder="Məs: Nizami küçəsi, Bakı" autocomplete="off" />
+                    <div id="start-suggestions" class="suggestions" hidden></div>
+                </div>
+            </label>
 
-      <label>Son:
-        <div class="autocomplete">
-          <input id="end" placeholder="Məs: Binəqədi qəsəbəsi və ya obyekt adı" autocomplete="off" />
-          <div id="end-suggestions" class="suggestions" hidden></div>
-        </div>
-      </label>
+            <label>Son:
+                <div class="autocomplete">
+                    <input id="end" placeholder="Məs: Binəqədi qəsəbəsi" autocomplete="off" />
+                    <div id="end-suggestions" class="suggestions" hidden></div>
+                </div>
+            </label>
 
-      <label>Prioritet:
-        <select id="route-priority">
-          <option value="fastest">Ən sürətli</option>
-          <option value="shortest">Ən qısa</option>
-          <option value="recommended">Tövsiyə edilən</option>
-        </select>
-      </label>
+            <label>Prioritet:
+                <select id="route-priority">
+                    <option value="fastest">Ən sürətli</option>
+                    <option value="shortest">Ən qısa</option>
+                    <option value="recommended">Tövsiyə edilən</option>
+                </select>
+            </label>
 
-      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
-        <button id="find-route">Yol tap</button>
-        <button id="btn-enable-push" style="background:#06b6d4">🔔 Bildiriş</button>
-      </div>
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+                <button id="find-route">Yol tap</button>
+            </div>
 
-      <div id="route-info" style="margin-top:10px;font-weight:600;"></div>
-      <div class="muted" style="margin-top:8px">Yazdıqca təkliflər çıxacaq — seçin və marşrut avtomatik qurulsun.</div>
-    </section>
+            <div id="route-info" style="margin-top:10px; font-weight:600;"></div>
+            <div class="muted" style="margin-top:8px">Adres yazaraq seçin, marşrut xətti real yol şəbəkəsində çəkiləcək.
+            </div>
+        </section>
 
-    <section class="panel route-map">
-      <div id="routeMap" style="height:600px"></div>
-    </section>
-  </main>
+        <section class="panel">
+            <div id="routeMap"></div>
+        </section>
+    </main>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.min.js"></script>
+    <script
+        src="https://unpkg.com/@gegeweb/leaflet-routing-machine-openroute@latest/dist/leaflet-routing-openroute.min.js"></script>
+    <!-- Leaflet Routing Machine JS -->
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
 
-  <script>
-  /* ---------- CONFIG ----------
-     ORS API: əgər səndə OpenRouteService açarı varsa aşağıya yapışdır.
-     Əks halda simulasiya (straight-line) işləyəcək.
-  */
-  const ORS_API_KEY = ""; // <-- əgər real marşrut istəyirsənsə buraya ORS açarını qoy
+    <!-- OpenRouteService Plugin (gegeweb) -->
+    <script src="https://unpkg.com/@gegeweb/leaflet-routing-machine-openroute@0.1.10/dist/leaflet-routing-openroute.min.js"></script>
+        const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImJjNWE3YmE3MTM0YzQ1NjdiNTFjYjRiYWQxZjUzMjMwIiwiaCI6Im11cm11cjY0In0=";  // mütləq doldur
 
-  /* ---------- small helpers ---------- */
-  function debounce(fn, wait = 300){
-    let t;
-    return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), wait); };
-  }
+        function debounce(fn, wait = 300) {
+            let t;
+            return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+        }
 
-  function haversineKm(a, b) {
-    const R = 6371;
-    const toRad = Math.PI / 180;
-    const dLat = (b[0] - a[0]) * toRad;
-    const dLon = (b[1] - a[1]) * toRad;
-    const la = a[0] * toRad, lb = b[0] * toRad;
-    const aa = Math.sin(dLat / 2) ** 2 + Math.cos(la) * Math.cos(lb) * Math.sin(dLon / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
-  }
+        async function nominatimSearch(q, limit = 6) {
+            if (!q || q.length < 2) return [];
+            const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(q)}&limit=${limit}`;
+            try {
+                const res = await fetch(url, { headers: { 'Accept-Language': 'az,en' } });
+                if (!res.ok) return [];
+                return res.json();
+            } catch (e) {
+                console.warn('nominatim error', e);
+                return [];
+            }
+        }
 
-  function decodePolyline(str, precision = 5) {
-    if (!str) return [];
-    if (Array.isArray(str)) return str.map(c => [c[1], c[0]]);
-    let index = 0, lat = 0, lng = 0, coordinates = [];
-    const factor = Math.pow(10, precision);
-    while (index < str.length) {
-      let b, shift = 0, result = 0;
-      do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
-      let deltaLat = (result & 1) ? ~(result >> 1) : (result >> 1);
-      lat += deltaLat;
-      shift = 0; result = 0;
-      do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
-      let deltaLng = (result & 1) ? ~(result >> 1) : (result >> 1);
-      lng += deltaLng;
-      coordinates.push([lat / factor, lng / factor]);
-    }
-    return coordinates;
-  }
+        function attachAutocomplete(inputEl, suggestionsEl) {
+            let items = [], active = -1, lastQ = '';
+            async function update(q) {
+                lastQ = q;
+                suggestionsEl.innerHTML = '';
+                suggestionsEl.hidden = true;
+                active = -1;
+                if (!q || q.length < 2) return;
+                const res = await nominatimSearch(q, 6);
+                if (lastQ !== q) return;
+                items = res.map(r => ({
+                    label: r.display_name,
+                    lat: parseFloat(r.lat),
+                    lon: parseFloat(r.lon)
+                }));
+                if (!items.length) return;
+                suggestionsEl.hidden = false;
+                items.forEach((it, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'suggestion';
+                    div.dataset.idx = idx;
+                    div.innerHTML = `<strong>${it.label.split(',')[0]}</strong><small>${it.label}</small>`;
+                    div.addEventListener('click', () => select(idx));
+                    suggestionsEl.appendChild(div);
+                });
+            }
+            const db = debounce(q => update(q), 260);
+            inputEl.addEventListener('input', () => {
+                inputEl.dataset.lat = '';
+                inputEl.dataset.lon = '';
+                db(inputEl.value.trim());
+            });
+            inputEl.addEventListener('keydown', e => {
+                const nodes = suggestionsEl.querySelectorAll('.suggestion');
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (active < nodes.length - 1) active++;
+                    updateActive(nodes);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (active > 0) active--;
+                    updateActive(nodes);
+                } else if (e.key === 'Enter') {
+                    if (active >= 0 && nodes[active]) {
+                        e.preventDefault();
+                        select(active);
+                    }
+                } else if (e.key === 'Escape') {
+                    hide();
+                }
+            });
+            function updateActive(nodes) {
+                nodes.forEach(n => n.classList.remove('active'));
+                if (active >= 0 && nodes[active]) nodes[active].classList.add('active');
+                suggestionsEl.hidden = nodes.length === 0;
+            }
+            function select(idx) {
+                const it = items[idx];
+                if (!it) return;
+                inputEl.value = it.label;
+                inputEl.dataset.lat = it.lat;
+                inputEl.dataset.lon = it.lon;
+                hide();
+                tryAutoRoute();
+            }
+            function hide() {
+                suggestionsEl.innerHTML = '';
+                suggestionsEl.hidden = true;
+                items = [];
+                active = -1;
+            }
+            document.addEventListener('click', ev => {
+                if (!suggestionsEl.contains(ev.target) && ev.target !== inputEl) hide();
+            });
+            return { hide };
+        }
 
-  /* ---------- Map init ---------- */
-  function initSmallMap(containerId = 'routeMap') {
-    if (window.mainMap) return window.mainMap;
-    const map = L.map(containerId).setView([40.4093,49.8671],12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'&copy; OpenStreetMap contributors' }).addTo(map);
-    window.mainMap = map;
-    return map;
-  }
+        function parseCoord(s) {
+            const re = /^-?\\d+(?:\\.\\d+)?\\s*,\\s*-?\\d+(?:\\.\\d+)?$/;
+            if (re.test(s)) {
+                const [la, lo] = s.split(',').map(x => parseFloat(x.trim()));
+                return [la, lo];
+            }
+            return null;
+        }
 
-  /* ---------- Find route (ORS or fallback) ---------- */
-  async function findOptimalRoute(startLatLng, endLatLng, options = {}, map = null) {
-    if (ORS_API_KEY && ORS_API_KEY.length > 10) {
-      try {
-        const profile = options.profile || "driving-car";
-        const preference = (options.priority === 'shortest') ? 'shortest' : (options.priority === 'recommended' ? 'recommended' : 'fastest');
-        const body = { coordinates:[[startLatLng[1],startLatLng[0]],[endLatLng[1],endLatLng[0]]], preference, instructions:true };
-        const resp = await fetch(`https://api.openrouteservice.org/v2/directions/${profile}`, {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json','Authorization': ORS_API_KEY },
-          body: JSON.stringify(body)
+        document.addEventListener('DOMContentLoaded', () => {
+            const map = L.map('routeMap').setView([40.4093, 49.8671], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            const startInput = document.getElementById('start');
+            const endInput = document.getElementById('end');
+            const startSug = document.getElementById('start-suggestions');
+            const endSug = document.getElementById('end-suggestions');
+
+            const sAuto = attachAutocomplete(startInput, startSug);
+            const eAuto = attachAutocomplete(endInput, endSug);
+
+            let routingControl = null;
+
+            window.tryAutoRoute = () => {
+                if (startInput.dataset.lat && startInput.dataset.lon && endInput.dataset.lat && endInput.dataset.lon) {
+                    document.getElementById('find-route').click();
+                }
+            };
+
+            document.getElementById('find-route').addEventListener('click', async () => {
+                const sVal = startInput.value.trim();
+                const eVal = endInput.value.trim();
+                const pr = document.getElementById('route-priority').value;
+
+                if (!sVal || !eVal) return alert('Başlanğıc və son ünvanları daxil edin.');
+
+                let sLatLng = parseCoord(sVal);
+                if (!sLatLng && startInput.dataset.lat) sLatLng = [parseFloat(startInput.dataset.lat), parseFloat(startInput.dataset.lon)];
+                if (!sLatLng) {
+                    const rr = await nominatimSearch(sVal, 1);
+                    if (rr && rr[0]) sLatLng = [parseFloat(rr[0].lat), parseFloat(rr[0].lon)];
+                }
+
+                let eLatLng = parseCoord(eVal);
+                if (!eLatLng && endInput.dataset.lat) eLatLng = [parseFloat(endInput.dataset.lat), parseFloat(endInput.dataset.lon)];
+                if (!eLatLng) {
+                    const rr2 = await nominatimSearch(eVal, 1);
+                    if (rr2 && rr2[0]) eLatLng = [parseFloat(rr2[0].lat), parseFloat(rr2[0].lon)];
+                }
+
+                if (!sLatLng || !eLatLng) return alert('Ünvanlardan biri tapılmadı!');
+
+                // remove existing control
+                if (routingControl) {
+                    map.removeControl(routingControl);
+                    routingControl = null;
+                }
+
+                routingControl = L.Routing.control({
+                    waypoints: [
+                        L.latLng(sLatLng[0], sLatLng[1]),
+                        L.latLng(eLatLng[0], eLatLng[1])
+                    ],
+                    router: L.Routing.openrouteservice(ORS_API_KEY, {
+                        service: 'directions',
+                        profile: 'driving-car',
+                        routingQueryParams: {
+                            preference: pr
+                        }
+                    }),
+                    showAlternatives: false,
+                    fitSelectedRoutes: true,
+                    routeWhileDragging: false
+                }).addTo(map);
+            });
         });
-        const data = await resp.json();
-        if (!data || !data.routes || !data.routes[0]) throw new Error('ORS response missing');
-        const rt = data.routes[0];
-        const geom = rt.geometry;
-        const path = Array.isArray(geom) ? decodePolyline(geom) : (rt.geometry && decodePolyline(rt.geometry) || []);
-        const distanceKm = rt.summary && rt.summary.distance ? rt.summary.distance/1000 : haversineKm(startLatLng,endLatLng);
-        const durationMin = rt.summary && rt.summary.duration ? rt.summary.duration/60 : (distanceKm/40)*60;
-        if (map) {
-          if (map._routeLayer) map.removeLayer(map._routeLayer);
-          map._routeLayer = L.polyline(path, { color:'#ff6b6b', weight:6, opacity:0.9 }).addTo(map);
-          map.fitBounds(map._routeLayer.getBounds(), { padding:[20,20] });
-        }
-        return { path, distance:distanceKm, time:durationMin, raw:data };
-      } catch (err) {
-        console.warn('ORS call failed, fallback', err);
-      }
-    }
-    // fallback simulated straight-line route
-    const distanceKm = haversineKm(startLatLng,endLatLng);
-    const avgSpeed = (options.priority === 'shortest') ? 50 : 40;
-    const durationMin = (distanceKm/avgSpeed)*60;
-    const path = [ startLatLng, [(startLatLng[0]+endLatLng[0])/2, (startLatLng[1]+endLatLng[1])/2], endLatLng ];
-    if (map) {
-      if (map._routeLayer) map.removeLayer(map._routeLayer);
-      map._routeLayer = L.polyline(path, { color:'#ff6b6b', weight:6, opacity:0.9 }).addTo(map);
-      map.fitBounds(map._routeLayer.getBounds(), { padding:[20,20] });
-    }
-    return { path, distance:distanceKm, time:durationMin, raw:null };
-  }
-
-  /* ---------- Nominatim autocomplete (simple, debounced) ---------- */
-  // Note: Nominatim has usage policy & rate limits. For production use consider a paid geocoding/autocomplete provider.
-  async function nominatimSearch(q, limit=6) {
-    if (!q || q.length < 2) return [];
-    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(q)}&limit=${limit}`;
-    try {
-      const res = await fetch(url, { headers: { 'Accept-Language':'az,en' }});
-      if (!res.ok) return [];
-      const data = await res.json();
-      return data; // array of results
-    } catch (e) {
-      console.warn('nominatim error', e);
-      return [];
-    }
-  }
-
-  function attachAutocomplete(inputEl, suggestionsEl) {
-    let items = [];
-    let active = -1;
-    let lastQuery = '';
-
-    async function update(query) {
-      lastQuery = query;
-      suggestionsEl.innerHTML = '';
-      suggestionsEl.hidden = true;
-      active = -1;
-      if (!query || query.length < 2) return;
-      const res = await nominatimSearch(query, 6);
-      // if query changed meanwhile, ignore old result
-      if (lastQuery !== query) return;
-      items = res.map(r => ({
-        label: r.display_name,
-        lat: parseFloat(r.lat),
-        lon: parseFloat(r.lon),
-        type: r.type || '',
-        addr: r.address || {}
-      }));
-      if (!items.length) return;
-      suggestionsEl.hidden = false;
-      items.forEach((it, idx) => {
-        const div = document.createElement('div');
-        div.className = 'suggestion';
-        div.setAttribute('data-idx', idx);
-        div.innerHTML = `<strong>${it.label.split(',')[0]}</strong><small>${it.label}</small>`;
-        div.addEventListener('click', () => select(idx));
-        suggestionsEl.appendChild(div);
-      });
-    }
-
-    const debounced = debounce((q)=> update(q), 260);
-
-    inputEl.addEventListener('input', (e)=> {
-      inputEl.dataset.lat = '';
-      inputEl.dataset.lon = '';
-      debounced(inputEl.value.trim());
-    });
-
-    inputEl.addEventListener('keydown', (e)=> {
-      const nodes = suggestionsEl.querySelectorAll('.suggestion');
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (active < nodes.length - 1) active++;
-        updateActive(nodes);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (active > 0) active--;
-        updateActive(nodes);
-      } else if (e.key === 'Enter') {
-        if (active >= 0 && nodes[active]) {
-          e.preventDefault();
-          select(active);
-        } // else allow submit
-      } else if (e.key === 'Escape') {
-        hide();
-      }
-    });
-
-    function updateActive(nodes) {
-      nodes.forEach(n => n.classList.remove('active'));
-      if (active >= 0 && nodes[active]) nodes[active].classList.add('active');
-      nodes.length ? suggestionsEl.hidden = false : suggestionsEl.hidden = true;
-    }
-
-    function select(idx) {
-      const it = items[idx];
-      if (!it) return;
-      inputEl.value = it.label;
-      inputEl.dataset.lat = it.lat;
-      inputEl.dataset.lon = it.lon;
-      hide();
-      // after selection, trigger route calculation if both fields are ready
-      tryAutoRoute();
-    }
-
-    function hide() {
-      suggestionsEl.innerHTML = '';
-      suggestionsEl.hidden = true;
-      items = [];
-      active = -1;
-    }
-
-    // click outside hides suggestions
-    document.addEventListener('click', (ev)=>{
-      if (!suggestionsEl.contains(ev.target) && ev.target !== inputEl) hide();
-    });
-
-    return { update, hide };
-  }
-
-  function parseCoordOrNull(s) {
-    const coordRegex = /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/;
-    if (coordRegex.test(s)) {
-      const [lat,lng] = s.split(',').map(x=>parseFloat(x.trim()));
-      return [lat,lng];
-    }
-    return null;
-  }
-
-  /* ---------- initialize UI & wiring ---------- */
-  document.addEventListener('DOMContentLoaded', () => {
-    const map = initSmallMap('routeMap');
-    const startInput = document.getElementById('start');
-    const endInput = document.getElementById('end');
-    const startSug = document.getElementById('start-suggestions');
-    const endSug = document.getElementById('end-suggestions');
-    const infoEl = document.getElementById('route-info');
-
-    const startAuto = attachAutocomplete(startInput, startSug);
-    const endAuto = attachAutocomplete(endInput, endSug);
-
-    // Try auto route when both inputs have lat/lon after selection
-    window.tryAutoRoute = async function tryAutoRoute() {
-      const sLat = startInput.dataset.lat, sLon = startInput.dataset.lon;
-      const eLat = endInput.dataset.lat, eLon = endInput.dataset.lon;
-      // If both selected from suggestions, trigger automatic route
-      if (sLat && sLon && eLat && eLon) {
-        // small delay to let user finalize UI
-        await new Promise(r=>setTimeout(r,120));
-        document.getElementById('find-route').click();
-      }
-    };
-
-    document.getElementById('find-route').addEventListener('click', async () => {
-      const sVal = startInput.value.trim();
-      const eVal = endInput.value.trim();
-      const p = document.getElementById('route-priority').value;
-      if (!sVal || !eVal) return alert('Başlanğıc və son nöqtələri daxil edin.');
-
-      infoEl.innerText = 'Marşrut hesablanır...';
-
-      // get latlngs: prefer dataset lat/lon (from suggestion), else try parse coords, else geocode
-      let sLatLng = parseCoordOrNull(sVal);
-      if (!sLatLng && startInput.dataset.lat && startInput.dataset.lon) sLatLng = [parseFloat(startInput.dataset.lat), parseFloat(startInput.dataset.lon)];
-      if (!sLatLng) {
-        infoEl.innerText = 'Başlanğıc ünvan tapılır...';
-        const res = await nominatimSearch(sVal,1);
-        if (res && res[0]) sLatLng = [parseFloat(res[0].lat), parseFloat(res[0].lon)];
-      }
-
-      let eLatLng = parseCoordOrNull(eVal);
-      if (!eLatLng && endInput.dataset.lat && endInput.dataset.lon) eLatLng = [parseFloat(endInput.dataset.lat), parseFloat(endInput.dataset.lon)];
-      if (!eLatLng) {
-        infoEl.innerText = 'Son ünvan tapılır...';
-        const res2 = await nominatimSearch(eVal,1);
-        if (res2 && res2[0]) eLatLng = [parseFloat(res2[0].lat), parseFloat(res2[0].lon)];
-      }
-
-      if (!sLatLng || !eLatLng) { infoEl.innerText=''; return alert('Ünvanlardan biri tapılmadı. Dəqiq yazıb yenidən cəhd edin.'); }
-
-      // clear previous pins/layers except base tiles
-      if (map._startMarker) { map.removeLayer(map._startMarker); map._startMarker = null; }
-      if (map._endMarker) { map.removeLayer(map._endMarker); map._endMarker = null; }
-      if (map._routeLayer) { map.removeLayer(map._routeLayer); map._routeLayer = null; }
-
-      map._startMarker = L.marker(sLatLng).addTo(map).bindPopup('Başlanğıc').openPopup();
-      map._endMarker = L.marker(eLatLng).addTo(map).bindPopup('Son');
-
-      const route = await findOptimalRoute(sLatLng, eLatLng, { priority: p }, map);
-
-      if (route) {
-        const distance = route.distance || 0;
-        const time = route.time || 0;
-        const avgConsumption = 7;
-        const emissionPerL = 2.31;
-        const fuel = (distance / 100) * avgConsumption;
-        const co2 = fuel * emissionPerL;
-
-        const now = new Date();
-        // basic traffic prediction (same heuristic as before)
-        let level='normal', delay=0;
-        const h = now.getHours();
-        if ((h>=8 && h<=10) || (h>=17 && h<=19)) { level='heavy'; delay = Math.round(time*0.3); }
-        else if (h>=12 && h<=14) { level='medium'; delay = Math.round(time*0.15); }
-        else { level='normal'; delay = Math.round(time*0.05); }
-
-        infoEl.innerHTML = `
-          🚗 Marşrut: məsafə <b>${distance.toFixed(1)} km</b> · təxminən <b>${time.toFixed(0)} dəq</b><br/>
-          ⛽ Yanacaq sərfiyyatı: <b>${fuel.toFixed(1)} L</b><br/>
-          🌍 CO₂ emissiyası: <b>${co2.toFixed(1)} kg</b><br/>
-          🧠 <b>Trafik vəziyyəti:</b> ${level.toUpperCase()}<br/>
-          ⏱ <b>Gecikmə:</b> ${delay.toFixed(0)} dəq
-        `;
-
-        // speak brief
-        if ('speechSynthesis' in window) {
-          const t = `Marşrut hazırdır. Məsafə ${distance.toFixed(1)} kilometr, təxminən ${time.toFixed(0)} dəqiqə.`;
-          const u = new SpeechSynthesisUtterance(t);
-          u.lang = 'az-AZ';
-          window.speechSynthesis.cancel();
-          window.speechSynthesis.speak(u);
-        }
-      } else {
-        infoEl.innerText = '❌ Marşrut tapılmadı.';
-      }
-    });
-  });
-  </script>
+    </script>
 </body>
+
 </html>
