@@ -1,83 +1,97 @@
+// js/auth.js
 (function () {
-  async function waitForFirebase() {
-    let retries = 0;
-    while (!window.urbanflowFirebase && retries < 100) {
-      await new Promise(r => setTimeout(r, 50));
-      retries++;
-}
-    if (!window.urbanflowFirebase) throw new Error("Firebase init tapılmadı!");
-}
+  function getUser() {
+    return JSON.parse(localStorage.getItem("urbanflow_user") || "null");
+  }
 
-  async function initAuth() {
-    await waitForFirebase();
-    const authApi = window.urbanflowFirebase.auth;
+  function setUser(user) {
+    localStorage.setItem("urbanflow_user", JSON.stringify(user));
+  }
 
-    console.log("✅ Auth init başladı...");
+  function clearUser() {
+    localStorage.removeItem("urbanflow_user");
+  }
 
-    const form = document.getElementById('authForm');
-    const modal = document.getElementById('authModal');
-    const emailInput = document.getElementById('authEmail');
-    const passwordInput = document.getElementById('authPassword');
-    const submitBtn = document.getElementById('authSubmit');
-    const closeBtn = document.getElementById('authClose');
+  // login vəziyyətini yoxla (dashboard və ya index üçün)
+  window.checkAuth = async function (redirectToDashboard = false) {
+    const user = getUser();
+    if (redirectToDashboard && !user) {
+      alert("Əvvəlcə daxil olmalısınız!");
+      window.location.href = "index.html";
+    }
+    return user;
+  };
 
-    const authUserSpan = document.createElement('span');
-    authUserSpan.id = 'authUser';
-    authUserSpan.className = 'muted';
-    authUserSpan.style.marginLeft = '10px';
+  // logout funksiyası
+  window.logout = function () {
+    clearUser();
+    alert("Çıxış etdiniz!");
+    window.location.href = "index.html";
+  };
 
-    const logoutBtn = document.createElement('button');
-    logoutBtn.id = 'btn-logout';
-    logoutBtn.textContent = 'Çıxış';
-    logoutBtn.style.display = 'none';
+  // login modal davranışı
+  document.addEventListener("DOMContentLoaded", () => {
+    const modal = document.getElementById("authModal");
+    const form = document.getElementById("authForm");
+    const email = document.getElementById("authEmail");
+    const password = document.getElementById("authPassword");
+    const trigger = document.getElementById("authTrigger");
+    const close = document.getElementById("authClose");
 
-    const controls = document.querySelector('.topbar.controls');
-    if (controls) {
-      controls.appendChild(authUserSpan);
-      controls.appendChild(logoutBtn);
-}
+    if (!modal || !form) return;
 
-    form.addEventListener('submit', async (e) => {
+    trigger.addEventListener("click", () => {
+      modal.style.display = "block";
+    });
+
+    close.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+
+    window.onclick = function (event) {
+      if (event.target === modal) modal.style.display = "none";
+    };
+
+    form.addEventListener("submit", (e) => {
       e.preventDefault();
-      const email = emailInput.value.trim();
-      const password = passwordInput.value.trim();
-      if (!email ||!password) return;
+      const mail = email.value.trim();
+      const pass = password.value.trim();
 
-      try {
-        await window.urbanflowFirebase.signIn(email, password);
-        alert("✅ Giriş uğurludur!");
-        modal.style.display = 'none';
-} catch (err) {
-        alert("❌ Xəta: " + err.message);
-}
-});
+      if (!mail || !pass) {
+        alert("Zəhmət olmasa e-mail və şifrə daxil edin.");
+        return;
+      }
 
-    logoutBtn.addEventListener('click', async () => {
-      await window.urbanflowFirebase.signOut();
-      alert("Çıxış etdiniz.");
-});
+      // sadə demo auth
+      const user = { email: mail, password: pass, createdAt: Date.now() };
+      setUser(user);
 
-    window.urbanflowFirebase.onAuthStateChanged(user => {
-      if (user) {
-        authUserSpan.textContent = user.email;
-        logoutBtn.style.display = 'inline-block';
-} else {
-        authUserSpan.textContent = '';
-        logoutBtn.style.display = 'none';
-}
-});
+      alert("✅ Giriş uğurludur!");
+      modal.style.display = "none";
 
-    closeBtn.addEventListener('click', () => {
-      modal.style.display = 'none';
-});
+      // səhifəni yenilə ki, vəziyyət dəyişsin
+      window.location.reload();
+    });
 
-    window.addEventListener('click', (event) => {
-      if (event.target === modal) {
-        modal.style.display = 'none';
-}
-});
-}
+    // əgər artıq login olubsa, header-ə göstər
+    const user = getUser();
+    if (user) {
+      const controls = document.querySelector(".controls");
+      if (controls) {
+        const span = document.createElement("span");
+        span.textContent = user.email;
+        span.style.marginLeft = "10px";
+        span.style.fontSize = "0.9rem";
+        span.style.color = "#eee";
 
-  document.addEventListener('DOMContentLoaded', initAuth);
+        const logoutBtn = document.createElement("button");
+        logoutBtn.textContent = "Çıxış";
+        logoutBtn.style.marginLeft = "10px";
+        logoutBtn.onclick = logout;
+
+        controls.appendChild(span);
+        controls.appendChild(logoutBtn);
+      }
+    }
+  });
 })();
-
