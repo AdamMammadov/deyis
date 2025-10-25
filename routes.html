@@ -231,7 +231,7 @@
     /* =========================
        HELPERS
        ========================= */
-    function debounce(fn, wait = 280) {
+    function debounce(fn, wait = 80) {
       let t;
       return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
     }
@@ -520,4 +520,5 @@
 </body>
 
 </html>
+
 
