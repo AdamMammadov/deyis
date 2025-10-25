@@ -1,520 +1,623 @@
 <!doctype html>
 <html lang="az">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Marşrut Planlayıcı — UrbanFlow (Photon + ORS)</title>
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Marşrut Planlayıcı — UrbanFlow (Autocomplete)</title>
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    /* --- Basic layout --- */
-    body {
-      font-family: Inter, system-ui, Arial, sans-serif;
-      margin: 0;
-      background: #f5f7fb;
-      color: #111
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 18px;
-      background: #042087;
-      box-shadow: 0 2px 8px rgba(16, 24, 40, .04)
-    }
-
-    .brand {
-      font-weight: 700;
-      color: #ffffff;
-      cursor: pointer
-    }
-
-    .container {
-      display: flex;
-      gap: 16px;
-      padding: 18px;
-      max-width: 1200px;
-      margin: 18px auto;
-      box-sizing: border-box
-    }
-
-    .panel {
-      background: #fff;
-      padding: 14px;
-      border-radius: 10px;
-      box-shadow: 0 6px 18px rgba(2, 6, 23, .04)
-    }
-
-    .route-inputs {
-      width: 360px
-    }
-
-    label {
-      display: block;
-      margin: 8px 0;
-      font-size: 14px;
-      color: #374151
-    }
-
-    input,
-    select {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid #e6edf3;
-      border-radius: 6px;
-      margin-top: 6px
-    }
-
-    button {
-      padding: 10px 14px;
-      background: #2563eb;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer
-    }
-
-    #routeMap {
-      width: 760px;
-      border-radius: 8px;
-      overflow: hidden
-    }
-
-    #route-info {
-      margin-top: 12px;
-      font-size: 15px
-    }
-
-    .muted {
-      color: #6b7280;
-      font-size: 13px
-    }
-
-    /* --- autocomplete dropdown --- */
-    .autocomplete {
-      position: relative;
-    }
-
-    .suggestions {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: calc(100% + 6px);
-      background: #fff;
-      border: 1px solid #e6edf3;
-      border-radius: 8px;
-      box-shadow: 0 8px 28px rgba(2, 6, 23, 0.08);
-      z-index: 1200;
-      max-height: 260px;
-      overflow: auto;
-    }
-
-    .suggestion {
-      padding: 10px 12px;
-      cursor: pointer;
-      font-size: 14px;
-      color: #0f172a;
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    .suggestion:last-child {
-      border-bottom: none;
-    }
-
-    .suggestion:hover,
-    .suggestion.active {
-      background: #f1f5ff;
-    }
-
-    .suggestion small {
-      display: block;
-      color: #64748b;
-      margin-top: 4px;
-      font-size: 12px;
-    }
-
-    /* responsive */
-    @media (max-width: 1000px) {
-      .container {
-        flex-direction: column;
-        padding: 12px
+    <style>
+      :root {
+        --accent: #0b3d91;
+        --muted: #6b7280;
       }
 
-      #routeMap {
-        width: 100%;
-        height: 420px
+      /* Basic layout */
+      body {
+        font-family: Inter, system-ui, Arial, sans-serif;
+        margin: 0;
+        background: #f5f7fb;
+        color: #111;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 18px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(16, 24, 40, 0.04);
+      }
+
+      .brand {
+        font-weight: 700;
+        color: #0f172a;
+        cursor: pointer;
+      }
+
+      .container {
+        display: flex;
+        gap: 16px;
+        padding: 18px;
+        max-width: 1200px;
+        margin: 18px auto;
+        box-sizing: border-box;
+      }
+
+      .panel {
+        background: #fff;
+        padding: 14px;
+        border-radius: 10px;
+        box-shadow: 0 6px 18px rgba(2, 6, 23, 0.04);
       }
 
       .route-inputs {
-        width: 100%
+        width: 360px;
       }
-    }
-  </style>
-</head>
 
-<body>
-  <header class="topbar">
-    <div class="brand" onclick="window.location.href='index.html'">UrbanFlow</div>
-    <div class="brand" onclick="window.location.href='index.html'">Ana Panel</div>
-  </header>
+      label {
+        display: block;
+        margin: 8px 0;
+        font-size: 14px;
+        color: #374151;
+      }
 
-  <main class="container routes-container">
-    <section class="panel route-inputs">
-      <h2>Marşrut tap (ünvanla — autocomplete)</h2>
+      input,
+      select {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #e6edf3;
+        border-radius: 6px;
+        margin-top: 6px;
+        font-size: 14px;
+      }
 
-      <label>Başlanğıc:
-        <div class="autocomplete">
-          <input id="start" placeholder="Məs: Nizami küçəsi, Bakı və ya sahə/obyekt" autocomplete="off" />
-          <div id="start-suggestions" class="suggestions" hidden></div>
-        </div>
-      </label>
+      button {
+        padding: 10px 14px;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
 
-      <label>Son:
-        <div class="autocomplete">
-          <input id="end" placeholder="Məs: Binəqədi qəsəbəsi və ya obyekt adı" autocomplete="off" />
-          <div id="end-suggestions" class="suggestions" hidden></div>
-        </div>
-      </label>
+      #routeMap {
+        width: 760px;
+        border-radius: 8px;
+        overflow: hidden;
+        height: 600px;
+      }
 
-      <label>Prioritet:
-        <select id="route-priority">
-          <option value="fastest">Ən sürətli</option>
-          <option value="shortest">Ən qısa</option>
-          <option value="recommended">Tövsiyə edilən</option>
-        </select>
-      </label>
+      #route-info {
+        margin-top: 12px;
+        font-size: 15px;
+      }
 
-      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
-        <button id="find-route">Yol tap</button>
-        <button id="btn-enable-push" style="background:#06b6d4">🔔 Bildiriş</button>
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      /* autocomplete */
+      .autocomplete {
+        position: relative;
+      }
+
+      .suggestions {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(100% + 6px);
+        background: #fff;
+        border: 1px solid #e6edf3;
+        border-radius: 8px;
+        box-shadow: 0 8px 28px rgba(2, 6, 23, 0.08);
+        z-index: 1200;
+        max-height: 260px;
+        overflow: auto;
+      }
+
+      .suggestion {
+        padding: 10px 12px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #0f172a;
+        border-bottom: 1px solid #f1f5f9;
+      }
+
+      .suggestion:last-child {
+        border-bottom: none;
+      }
+
+      .suggestion:hover,
+      .suggestion.active {
+        background: #f1f5ff;
+      }
+
+      .suggestion small {
+        display: block;
+        color: #64748b;
+        margin-top: 4px;
+        font-size: 12px;
+      }
+
+      /* loading badge */
+      .loading-badge {
+        display: inline-block;
+        padding: 6px 10px;
+        background: #eef2ff;
+        color: #0b3d91;
+        border-radius: 999px;
+        font-size: 13px;
+        margin-left: 8px;
+      }
+
+      @media (max-width: 1000px) {
+        .container {
+          flex-direction: column;
+          padding: 12px;
+        }
+
+        #routeMap {
+          width: 100%;
+          height: 420px;
+        }
+
+        .route-inputs {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="topbar">
+      <div class="brand" onclick="window.location.href='index.html'">
+        UrbanFlow
       </div>
+      <div class="controls"><a href="index.html">Ana Panel</a></div>
+    </header>
 
-      <div id="route-info" style="margin-top:10px;font-weight:600;"></div>
-      <div class="muted" style="margin-top:8px">Yazdıqca təkliflər çıxacaq — seçin və marşrut avtomatik qurulsun.</div>
-    </section>
+    <main class="container routes-container">
+      <section class="panel route-inputs">
+        <h2>Marşrut tap — (ünvanla)</h2>
 
-    <section class="panel route-map">
-      <div id="routeMap" style="height:600px"></div>
-    </section>
-  </main>
+        <label>
+          Başlanğıc:
+          <div class="autocomplete">
+            <input
+              id="start"
+              placeholder="Məs: Nizami küçəsi, Bakı və ya obyekt"
+              autocomplete="off"
+            />
+            <div id="start-suggestions" class="suggestions" hidden></div>
+          </div>
+        </label>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <label>
+          Son:
+          <div class="autocomplete">
+            <input
+              id="end"
+              placeholder="Məs: Binəqədi qəsəbəsi və ya obyekt"
+              autocomplete="off"
+            />
+            <div id="end-suggestions" class="suggestions" hidden></div>
+          </div>
+        </label>
 
-  <script>
-    /* ---------- CONFIG ----------
-       ORS API: əgər səndə OpenRouteService açarı varsa aşağıya yapışdır.
-       Əks halda simulasiya (straight-line) işləyəcək.
-    */
-    const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImJjNWE3YmE3MTM0YzQ1NjdiNTFjYjRiYWQxZjUzMjMwIiwiaCI6Im11cm11cjY0In0="; // <-- əgər real marşrut istəyirsənsə buraya ORS açarını qoy
+        <label>
+          Prioritet:
+          <select id="route-priority">
+            <option value="fastest">Ən sürətli</option>
+            <option value="shortest">Ən qısa</option>
+            <option value="recommended">Tövsiyə edilən</option>
+          </select>
+        </label>
 
-    /* ---------- small helpers ---------- */
-    function debounce(fn, wait = 300) {
-      let t;
-      return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
-    }
+        <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center">
+          <button id="find-route">Yol tap</button>
+          <span id="loading" class="loading-badge" style="display: none">Yüklənir...</span>
+        </div>
 
-    function haversineKm(a, b) {
-      const R = 6371;
-      const toRad = Math.PI / 180;
-      const dLat = (b[0] - a[0]) * toRad;
-      const dLon = (b[1] - a[1]) * toRad;
-      const la = a[0] * toRad, lb = b[0] * toRad;
-      const aa = Math.sin(dLat / 2) ** 2 + Math.cos(la) * Math.cos(lb) * Math.sin(dLon / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
-    }
+        <div id="route-info" style="margin-top: 10px; font-weight: 600"></div>
 
-    function decodePolyline(str, precision = 5) {
-      if (!str) return [];
-      if (Array.isArray(str)) return str.map(c => [c[1], c[0]]);
-      let index = 0, lat = 0, lng = 0, coordinates = [];
-      const factor = Math.pow(10, precision);
-      while (index < str.length) {
-        let b, shift = 0, result = 0;
-        do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
-        let deltaLat = (result & 1) ? ~(result >> 1) : (result >> 1);
-        lat += deltaLat;
-        shift = 0; result = 0;
-        do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
-        let deltaLng = (result & 1) ? ~(result >> 1) : (result >> 1);
-        lng += deltaLng;
-        coordinates.push([lat / factor, lng / factor]);
-      }
-      return coordinates;
-    }
+        <div class="muted" style="margin-top: 8px">
+          Yazdıqca təkliflər çıxacaq — seçin və marşrut avtomatik qurulsun.
+          Koordinat (lat,lng) da daxil edə bilərsiniz.
+        </div>
+      </section>
 
-    /* ---------- Map init ---------- */
-    function initSmallMap(containerId = 'routeMap') {
-      if (window.mainMap) return window.mainMap;
-      const map = L.map(containerId).setView([40.4093, 49.8671], 12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
-      window.mainMap = map;
-      return map;
-    }
+      <section class="panel route-map">
+        <div id="routeMap"></div>
+      </section>
+    </main>
 
-    /* ---------- Find route (ORS or fallback) ---------- */
-    async function findOptimalRoute(startLatLng, endLatLng, options = {}, map = null) {
-      if (ORS_API_KEY && ORS_API_KEY.length > 10) {
-        try {
-          const profile = options.profile || "driving-car";
-          const preference = (options.priority === 'shortest') ? 'shortest' : (options.priority === 'recommended' ? 'recommended' : 'fastest');
-          const body = { coordinates: [[startLatLng[1], startLatLng[0]], [endLatLng[1], endLatLng[0]]], preference, instructions: true };
-          const resp = await fetch(`https://api.openrouteservice.org/v2/directions/${profile}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': ORS_API_KEY },
-            body: JSON.stringify(body)
-          });
-          const data = await resp.json();
-          if (!data || !data.routes || !data.routes[0]) throw new Error('ORS response missing');
-          const rt = data.routes[0];
-          const geom = rt.geometry;
-          const path = Array.isArray(geom) ? decodePolyline(geom) : (rt.geometry && decodePolyline(rt.geometry) || []);
-          const distanceKm = rt.summary && rt.summary.distance ? rt.summary.distance / 1000 : haversineKm(startLatLng, endLatLng);
-          const durationMin = rt.summary && rt.summary.duration ? rt.summary.duration / 60 : (distanceKm / 40) * 60;
-          if (map) {
-            if (map._routeLayer) map.removeLayer(map._routeLayer);
-            map._routeLayer = L.polyline(path, { color: '#ff6b6b', weight: 6, opacity: 0.9 }).addTo(map);
-            map.fitBounds(map._routeLayer.getBounds(), { padding: [20, 20] });
-          }
-          return { path, distance: distanceKm, time: durationMin, raw: data };
-        } catch (err) {
-          console.warn('ORS call failed, fallback', err);
-        }
-      }
-      // fallback simulated straight-line route
-      const distanceKm = haversineKm(startLatLng, endLatLng);
-      const avgSpeed = (options.priority === 'shortest') ? 50 : 40;
-      const durationMin = (distanceKm / avgSpeed) * 60;
-      const path = [startLatLng, [(startLatLng[0] + endLatLng[0]) / 2, (startLatLng[1] + endLatLng[1]) / 2], endLatLng];
-      if (map) {
-        if (map._routeLayer) map.removeLayer(map._routeLayer);
-        map._routeLayer = L.polyline(path, { color: '#ff6b6b', weight: 6, opacity: 0.9 }).addTo(map);
-        map.fitBounds(map._routeLayer.getBounds(), { padding: [20, 20] });
-      }
-      return { path, distance: distanceKm, time: durationMin, raw: null };
-    }
+    <!-- Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    /* ---------- Nominatim autocomplete (simple, debounced) ---------- */
-    // Note: Nominatim has usage policy & rate limits. For production use consider a paid geocoding/autocomplete provider.
-    async function nominatimSearch(q, limit = 6) {
-      if (!q || q.length < 2) return [];
-      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(q)}&limit=${limit}`;
-      try {
-        const res = await fetch(url, { headers: { 'Accept-Language': 'az,en' } });
-        if (!res.ok) return [];
-        const data = await res.json();
-        return data; // array of results
-      } catch (e) {
-        console.warn('nominatim error', e);
-        return [];
-      }
-    }
+    <script>
+      /* ========================= CONFIG ========================= */
+      const ORS_API_KEY =
+        "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImJjNWE3YmE3MTM0YzQ1NjdiNTFjYjRiYWQxZjUzMjMwIiwiaCI6Im11cm11cjY0In0=";
+      const PHOTON_ENDPOINT = "https://photon.komoot.io/api/";
 
-    function attachAutocomplete(inputEl, suggestionsEl) {
-      let items = [];
-      let active = -1;
-      let lastQuery = '';
-
-      async function update(query) {
-        lastQuery = query;
-        suggestionsEl.innerHTML = '';
-        suggestionsEl.hidden = true;
-        active = -1;
-        if (!query || query.length < 2) return;
-        const res = await nominatimSearch(query, 6);
-        // if query changed meanwhile, ignore old result
-        if (lastQuery !== query) return;
-        items = res.map(r => ({
-          label: r.display_name,
-          lat: parseFloat(r.lat),
-          lon: parseFloat(r.lon),
-          type: r.type || '',
-          addr: r.address || {}
-        }));
-        if (!items.length) return;
-        suggestionsEl.hidden = false;
-        items.forEach((it, idx) => {
-          const div = document.createElement('div');
-          div.className = 'suggestion';
-          div.setAttribute('data-idx', idx);
-          div.innerHTML = `<strong>${it.label.split(',')[0]}</strong><small>${it.label}</small>`;
-          div.addEventListener('click', () => select(idx));
-          suggestionsEl.appendChild(div);
-        });
+      /* ========================= HELPERS ========================= */
+      function debounce(fn, wait = 280) {
+        let t;
+        return (...args) => {
+          clearTimeout(t);
+          t = setTimeout(() => fn(...args), wait);
+        };
       }
 
-      const debounced = debounce((q) => update(q), 260);
-
-      inputEl.addEventListener('input', (e) => {
-        inputEl.dataset.lat = '';
-        inputEl.dataset.lon = '';
-        debounced(inputEl.value.trim());
-      });
-
-      inputEl.addEventListener('keydown', (e) => {
-        const nodes = suggestionsEl.querySelectorAll('.suggestion');
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          if (active < nodes.length - 1) active++;
-          updateActive(nodes);
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          if (active > 0) active--;
-          updateActive(nodes);
-        } else if (e.key === 'Enter') {
-          if (active >= 0 && nodes[active]) {
-            e.preventDefault();
-            select(active);
-          } // else allow submit
-        } else if (e.key === 'Escape') {
-          hide();
-        }
-      });
-
-      function updateActive(nodes) {
-        nodes.forEach(n => n.classList.remove('active'));
-        if (active >= 0 && nodes[active]) nodes[active].classList.add('active');
-        nodes.length ? suggestionsEl.hidden = false : suggestionsEl.hidden = true;
+      function isCoordString(s) {
+        if (!s) return false;
+        return /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(s.trim());
       }
 
-      function select(idx) {
-        const it = items[idx];
-        if (!it) return;
-        inputEl.value = it.label;
-        inputEl.dataset.lat = it.lat;
-        inputEl.dataset.lon = it.lon;
-        hide();
-        // after selection, trigger route calculation if both fields are ready
-        tryAutoRoute();
-      }
-
-      function hide() {
-        suggestionsEl.innerHTML = '';
-        suggestionsEl.hidden = true;
-        items = [];
-        active = -1;
-      }
-
-      // click outside hides suggestions
-      document.addEventListener('click', (ev) => {
-        if (!suggestionsEl.contains(ev.target) && ev.target !== inputEl) hide();
-      });
-
-      return { update, hide };
-    }
-
-    function parseCoordOrNull(s) {
-      const coordRegex = /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/;
-      if (coordRegex.test(s)) {
-        const [lat, lng] = s.split(',').map(x => parseFloat(x.trim()));
+      function parseCoord(s) {
+        if (!isCoordString(s)) return null;
+        const [lat, lng] = s.split(",").map((x) => parseFloat(x.trim()));
         return [lat, lng];
       }
-      return null;
-    }
 
-    /* ---------- initialize UI & wiring ---------- */
-    document.addEventListener('DOMContentLoaded', () => {
-      const map = initSmallMap('routeMap');
-      const startInput = document.getElementById('start');
-      const endInput = document.getElementById('end');
-      const startSug = document.getElementById('start-suggestions');
-      const endSug = document.getElementById('end-suggestions');
-      const infoEl = document.getElementById('route-info');
+      // decode encoded polyline (precision 5) used by ORS -> returns [[lat,lng],...]
+      function decodePolyline(encoded, precision = 5) {
+        if (!encoded) return [];
+        let index = 0,
+          lat = 0,
+          lng = 0,
+          coordinates = [];
+        const factor = Math.pow(10, precision);
 
-      const startAuto = attachAutocomplete(startInput, startSug);
-      const endAuto = attachAutocomplete(endInput, endSug);
+        while (index < encoded.length) {
+          let result = 0,
+            shift = 0,
+            b;
+          do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+          } while (b >= 0x20);
 
-      // Try auto route when both inputs have lat/lon after selection
-      window.tryAutoRoute = async function tryAutoRoute() {
-        const sLat = startInput.dataset.lat, sLon = startInput.dataset.lon;
-        const eLat = endInput.dataset.lat, eLon = endInput.dataset.lon;
-        // If both selected from suggestions, trigger automatic route
-        if (sLat && sLon && eLat && eLon) {
-          // small delay to let user finalize UI
-          await new Promise(r => setTimeout(r, 120));
-          document.getElementById('find-route').click();
-        }
-      };
+          let deltaLat = result & 1 ? ~(result >> 1) : result >> 1;
+          lat += deltaLat;
+          result = 0;
+          shift = 0;
+          do {
+            b = encoded.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+          } while (b >= 0x20);
 
-      document.getElementById('find-route').addEventListener('click', async () => {
-        const sVal = startInput.value.trim();
-        const eVal = endInput.value.trim();
-        const p = document.getElementById('route-priority').value;
-        if (!sVal || !eVal) return alert('Başlanğıc və son nöqtələri daxil edin.');
-
-        infoEl.innerText = 'Marşrut hesablanır...';
-
-        // get latlngs: prefer dataset lat/lon (from suggestion), else try parse coords, else geocode
-        let sLatLng = parseCoordOrNull(sVal);
-        if (!sLatLng && startInput.dataset.lat && startInput.dataset.lon) sLatLng = [parseFloat(startInput.dataset.lat), parseFloat(startInput.dataset.lon)];
-        if (!sLatLng) {
-          infoEl.innerText = 'Başlanğıc ünvan tapılır...';
-          const res = await nominatimSearch(sVal, 1);
-          if (res && res[0]) sLatLng = [parseFloat(res[0].lat), parseFloat(res[0].lon)];
+          let deltaLng = result & 1 ? ~(result >> 1) : result >> 1;
+          lng += deltaLng;
+          coordinates.push([lat / factor, lng / factor]);
         }
 
-        let eLatLng = parseCoordOrNull(eVal);
-        if (!eLatLng && endInput.dataset.lat && endInput.dataset.lon) eLatLng = [parseFloat(endInput.dataset.lat), parseFloat(endInput.dataset.lon)];
-        if (!eLatLng) {
-          infoEl.innerText = 'Son ünvan tapılır...';
-          const res2 = await nominatimSearch(eVal, 1);
-          if (res2 && res2[0]) eLatLng = [parseFloat(res2[0].lat), parseFloat(res2[0].lon)];
-        }
+        return coordinates;
+      }
 
-        if (!sLatLng || !eLatLng) { infoEl.innerText = ''; return alert('Ünvanlardan biri tapılmadı. Dəqiq yazıb yenidən cəhd edin.'); }
+      /* ========================= MAP & ROUTE ========================= */
+      function initMap() {
+        if (window._uf_map) return window._uf_map;
+        const m = L.map("routeMap", { zoomControl: true }).setView(
+          [40.4093, 49.8671],
+          12
+        );
 
-        // clear previous pins/layers except base tiles
-        if (map._startMarker) { map.removeLayer(map._startMarker); map._startMarker = null; }
-        if (map._endMarker) { map.removeLayer(map._endMarker); map._endMarker = null; }
-        if (map._routeLayer) { map.removeLayer(map._routeLayer); map._routeLayer = null; }
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap contributors",
+        }).addTo(m);
 
-        map._startMarker = L.marker(sLatLng).addTo(map).bindPopup('Başlanğıc').openPopup();
-        map._endMarker = L.marker(eLatLng).addTo(map).bindPopup('Son');
+        window._uf_map = m;
+        return m;
+      }
 
-        const route = await findOptimalRoute(sLatLng, eLatLng, { priority: p }, map);
+      async function orsDirections(startLatLng, endLatLng, preference = "fastest") {
+        const profile = "driving-car";
+        const body = {
+          coordinates: [
+            [startLatLng[1], startLatLng[0]],
+            [endLatLng[1], endLatLng[0]],
+          ],
+          preference:
+            preference === "shortest"
+              ? "shortest"
+              : preference === "recommended"
+              ? "recommended"
+              : "fastest",
+          instructions: true,
+          geometry: true,
+          geometry_format: "encodedpolyline",
+        };
 
-        if (route) {
-          const distance = route.distance || 0;
-          const time = route.time || 0;
-          const avgConsumption = 7;
-          const emissionPerL = 2.31;
-          const fuel = (distance / 100) * avgConsumption;
-          const co2 = fuel * emissionPerL;
-
-          const now = new Date();
-          // basic traffic prediction (same heuristic as before)
-          let level = 'normal', delay = 0;
-          const h = now.getHours();
-          if ((h >= 8 && h <= 10) || (h >= 17 && h <= 19)) { level = 'heavy'; delay = Math.round(time * 0.3); }
-          else if (h >= 12 && h <= 14) { level = 'medium'; delay = Math.round(time * 0.15); }
-          else { level = 'normal'; delay = Math.round(time * 0.05); }
-
-          infoEl.innerHTML = `
-          🚗 Marşrut: məsafə <b>${distance.toFixed(1)} km</b> · təxminən <b>${time.toFixed(0)} dəq</b><br/>
-          ⛽ Yanacaq sərfiyyatı: <b>${fuel.toFixed(1)} L</b><br/>
-          🌍 CO₂ emissiyası: <b>${co2.toFixed(1)} kg</b><br/>
-          🧠 <b>Trafik vəziyyəti:</b> ${level.toUpperCase()}<br/>
-          ⏱ <b>Gecikmə:</b> ${delay.toFixed(0)} dəq
-        `;
-
-          // speak brief
-          if ('speechSynthesis' in window) {
-            const t = `Marşrut hazırdır. Məsafə ${distance.toFixed(1)} kilometr, təxminən ${time.toFixed(0)} dəqiqə.`;
-            const u = new SpeechSynthesisUtterance(t);
-            u.lang = 'az-AZ';
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(u);
+        const res = await fetch(
+          "https://api.openrouteservice.org/v2/directions/" + profile,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: ORS_API_KEY,
+            },
+            body: JSON.stringify(body),
           }
-        } else {
-          infoEl.innerText = '❌ Marşrut tapılmadı.';
+        );
+
+        if (!res.ok) {
+          const txt = await res.text().catch(() => res.statusText);
+          throw new Error("ORS error: " + res.status + " " + txt);
         }
-      });
-    });
-  </script>
-</body>
 
-</html>
+        const json = await res.json();
+        if (!json || !json.routes || !json.routes[0]) throw new Error("ORS: no route");
 
+        const rt = json.routes[0];
+        const geom = rt.geometry;
+        const path = decodePolyline(geom, 5);
+        const distanceKm =
+          rt.summary && rt.summary.distance ? rt.summary.distance / 1000 : null;
+        const durationMin =
+          rt.summary && rt.summary.duration ? rt.summary.duration / 60 : null;
 
+        return { path, distanceKm, durationMin, raw: rt };
+      }
 
+      /* ========================= AUTOCOMPLETE (PHOTON) ========================= */
+      async function photonSearch(q, limit = 6) {
+        if (!q || q.length < 2) return [];
+        const url = `${PHOTON_ENDPOINT}?q=${encodeURIComponent(q)}&limit=${limit}`;
+
+        try {
+          const r = await fetch(url, { headers: { "Accept-Language": "az,en" } });
+          if (!r.ok) return [];
+          const data = await r.json();
+          return data.features || [];
+        } catch (e) {
+          console.warn("photon error", e);
+          return [];
+        }
+      }
+
+      function attachAutocomplete(inputEl, suggestionsEl) {
+        let items = [],
+          active = -1,
+          lastQ = "";
+
+        const render = (list) => {
+          suggestionsEl.innerHTML = "";
+          if (!list || !list.length) {
+            suggestionsEl.hidden = true;
+            return;
+          }
+
+          suggestionsEl.hidden = false;
+          list.forEach((it, i) => {
+            const title =
+              it.display ||
+              (it.properties &&
+                (it.properties.name || it.properties.label)) ||
+              "";
+            const subtitle =
+              (it.properties &&
+                (it.properties.city ||
+                  it.properties.county ||
+                  it.properties.country)) ||
+              "";
+            const div = document.createElement("div");
+            div.className = "suggestion";
+            div.dataset.idx = i;
+            div.innerHTML = `<strong>${title}</strong><small>${subtitle}</small>`;
+            div.addEventListener("click", () => select(i));
+            suggestionsEl.appendChild(div);
+          });
+        };
+
+        const doSearch = debounce(async (q) => {
+          lastQ = q;
+          if (!q || q.length < 2) {
+            items = [];
+            render([]);
+            return;
+          }
+
+          const res = await photonSearch(q, 8);
+          if (lastQ !== inputEl.value.trim()) return;
+
+          items = res.map((f) => {
+            const lat =
+              f.geometry && f.geometry.coordinates
+                ? f.geometry.coordinates[1]
+                : null;
+            const lon =
+              f.geometry && f.geometry.coordinates
+                ? f.geometry.coordinates[0]
+                : null;
+            const display =
+              f.properties && f.properties.label
+                ? f.properties.label
+                : f.properties && f.properties.name
+                ? f.properties.name
+                : "";
+            return { display, lat, lon, raw: f, properties: f.properties || {} };
+          });
+
+          render(items);
+        }, 220);
+
+        inputEl.addEventListener("input", () => {
+          inputEl.dataset.lat = "";
+          inputEl.dataset.lon = "";
+          doSearch(inputEl.value.trim());
+        });
+
+        inputEl.addEventListener("keydown", (e) => {
+          const nodes = suggestionsEl.querySelectorAll(".suggestion");
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            if (active < nodes.length - 1) active++;
+            updateActive(nodes);
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            if (active > 0) active--;
+            updateActive(nodes);
+          } else if (e.key === "Enter") {
+            if (active >= 0 && nodes[active]) {
+              e.preventDefault();
+              select(active);
+            }
+          } else if (e.key === "Escape") {
+            hide();
+          }
+        });
+
+        function updateActive(nodes) {
+          nodes.forEach((n) => n.classList.remove("active"));
+          if (active >= 0 && nodes[active]) nodes[active].classList.add("active");
+          nodes.length ? (suggestionsEl.hidden = false) : (suggestionsEl.hidden = true);
+        }
+
+        function select(idx) {
+          const it = items[idx];
+          if (!it) return;
+          inputEl.value =
+            it.display ||
+            (it.properties &&
+              (it.properties.name || it.properties.label)) ||
+            inputEl.value;
+          inputEl.dataset.lat = it.lat;
+          inputEl.dataset.lon = it.lon;
+          hide();
+          tryAutoRoute();
+        }
+
+        function hide() {
+          suggestionsEl.innerHTML = "";
+          suggestionsEl.hidden = true;
+          items = [];
+          active = -1;
+        }
+
+        document.addEventListener("click", (ev) => {
+          if (ev.target !== inputEl && !suggestionsEl.contains(ev.target)) hide();
+        });
+
+        return { hide };
+      }
+
+      /* ========================= UI wiring ========================= */
+      document.addEventListener("DOMContentLoaded", () => {
+        const map = initMap();
+        const startInput = document.getElementById("start");
+        const endInput = document.getElementById("end");
+        const startSug = document.getElementById("start-suggestions");
+        const endSug = document.getElementById("end-suggestions");
+        const findBtn = document.getElementById("find-route");
+        const infoEl = document.getElementById("route-info");
+        const loadingBadge = document.getElementById("loading");
+
+        attachAutocomplete(startInput, startSug);
+        attachAutocomplete(endInput, endSug);
+
+        window.tryAutoRoute = async function tryAutoRoute() {
+          if (
+            startInput.dataset.lat &&
+            startInput.dataset.lon &&
+            endInput.dataset.lat &&
+            endInput.dataset.lon
+          ) {
+            await new Promise((r) => setTimeout(r, 120));
+            findBtn.click();
+          }
+        };
+
+        findBtn.addEventListener("click", async () => {
+          const sVal = startInput.value.trim();
+          const eVal = endInput.value.trim();
+          const priority =
+            document.getElementById("route-priority").value || "fastest";
+
+          if (!sVal || !eVal)
+            return alert("Başlanğıc və son ünvanları daxil edin.");
+
+          loadingBadge.style.display = "inline-block";
+          infoEl.innerText = "Marşrut hesablanır...";
+
+          let sLatLng = null;
+          if (startInput.dataset.lat && startInput.dataset.lon)
+            sLatLng = [
+              parseFloat(startInput.dataset.lat),
+              parseFloat(startInput.dataset.lon),
+            ];
+          else if (isCoordString(sVal)) sLatLng = parseCoord(sVal);
+          else {
+            const res = await photonSearch(sVal, 1);
+            if (res && res.length)
+              sLatLng = [
+                res[0].geometry.coordinates[1],
+                res[0].geometry.coordinates[0],
+              ];
+          }
+
+          let eLatLng = null;
+          if (endInput.dataset.lat && endInput.dataset.lon)
+            eLatLng = [
+              parseFloat(endInput.dataset.lat),
+              parseFloat(endInput.dataset.lon),
+            ];
+          else if (isCoordString(eVal)) eLatLng = parseCoord(eVal);
+          else {
+            const res2 = await photonSearch(eVal, 1);
+             if (res2 && res2.length) eLatLng = [res2[0].geometry.coordinates[1],
+              res2[0].geometry.coordinates[0]];
+               } if (!sLatLng || !eLatLng)
+                { loadingBadge.style.display = 'none'; infoEl.innerText = '';
+                 return alert('Ünvanlardan biri tapılmadı. Dəqiq ünvan yazın və ya təklifdən seçin.');
+                  } try { if (map._startMarker) { map.removeLayer(map._startMarker);
+                   map._startMarker = null;
+                    } if (map._endMarker) { map.removeLayer(map._endMarker); map._endMarker = null;
+
+                     } if (map._routeLayer) { map.removeLayer(map._routeLayer); map._routeLayer = null;
+
+                      } map._startMarker = L.marker(sLatLng).addTo(map).bindPopup('Başlanğıc').openPopup();
+                       map._endMarker = L.marker(eLatLng).addTo(map).bindPopup('Son');
+                        const r = await orsDirections(sLatLng, eLatLng, priority);
+                         if (r && r.path && r.path.length) { map._routeLayer = L.polyline(r.path,
+                          { color: '#ff6b6b', weight: 6, opacity: 0.95 }).addTo(map); map.fitBounds(map._routeLayer.getBounds(),
+                           { padding: [20, 20] });
+                            } else { map._routeLayer = L.polyline([sLatLng, eLatLng],
+                             { color: '#ff6b6b', weight: 6, opacity: 0.7, dashArray: '6,8' }).addTo(map);
+                              map.fitBounds(L.latLngBounds([sLatLng, eLatLng]),
+                               { padding: [20, 20] }); } const distance = (r && r.distanceKm) ? r.distanceKm : (function (a, b) { const R = 6371;
+                                const toRad = Math.PI / 180;
+                                 const dLat = (b[0] - a[0]) * toRad; const dLon = (b[1] - a[1]) * toRad; const la = a[0] * toRad,
+                                  lb = b[0] * toRad; const aa = Math.sin(dLat / 2) ** 2 + Math.cos(la) * Math.cos(lb) * Math.sin(dLon / 2) ** 2;
+                                   return R * 2 * Math.atan2(Math.sqrt(aa),
+                                    Math.sqrt(1 - aa)); })(sLatLng, eLatLng);
+                                     const time = (r && r.durationMin) ? r.durationMin : Math.round((distance / 40) * 60);
+                                      const now = new Date();
+                                       const h = now.getHours();
+                                        let level = 'NORMAL',
+                                         delay = 0;
+                                          if ((h >= 8 && h <= 10) || (h >= 17 && h <= 19)) { level = 'HEAVY'; delay = Math.round(time * 0.3);
+                                           } else if (h >= 12 && h <= 14) { level = 'MEDIUM';
+                                            delay = Math.round(time * 0.15);
+                                             } else { level = 'NORMAL';
+                                              delay = Math.round(time * 0.05);
+                                               } infoEl.innerHTML = 🚗 Məsafə: <b>${(distance).toFixed(1)} km</b> · ⏱ Vaxt: <b>${(time).toFixed(0)} dəq</b><br/> 
+                                               🧠 Trafik: <b>${level}</b> · Təxmini gecikmə: <b>${delay} dəq</b>;
+                                             } catch (err) { console.error(err);
+                                                alert('Marşrut alınarkən xəta: ' + (err.message || err));
+                                                 infoEl.innerText = '❌ Marşrut tapılmadı.';
+                                                  } finally { loadingBadge.style.display = 'none';
+                                                   } });
+                                                    });
+                                                     </script>
+                                                     </body>
+                                                     </html> 
