@@ -24,7 +24,7 @@ async function loadCombinedTraffic() {
 }
 
 async function initMainMap() {
-  mainMap = L.map('map', { zoomControl: true }).setView([40.395, 49.85], 12);
+  mainMap = L.map('map', { zoomControl: true }).setView([40.4766738,49.8352748], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors'
@@ -144,4 +144,5 @@ function initSmallMap(containerId) {
 document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('map')) initMainMap();
 });
+
 
