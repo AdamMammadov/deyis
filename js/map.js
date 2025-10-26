@@ -1,4 +1,4 @@
-// map.js — FINAL version, no static coords, pure dynamic "Məni göstər"
+// map.js — final stable version (real "Məni göstər" without fixed coords)
 let mainMap;
 let markers = [];
 let userMarker = null;
@@ -10,49 +10,57 @@ async function fetchJSON(path) {
 }
 
 function trafficColor(level) {
-  if (level === 'high') return '#e02424';
-  if (level === 'medium') return '#ffb020';
-  return '#22c55e';
+  if (level === "high") return "#e02424";
+  if (level === "medium") return "#ffb020";
+  return "#22c55e";
 }
 
 async function loadCombinedTraffic() {
-  const base = await fetchJSON('assets/data/traffic.json').catch(() => []);
-  const override = JSON.parse(localStorage.getItem('urbanflow_traffic_override') || '[]');
-  base.forEach((b, i) => { if (!b.id) b.id = 'base_' + i; });
+  const base = await fetchJSON("assets/data/traffic.json").catch(() => []);
+  const override = JSON.parse(localStorage.getItem("urbanflow_traffic_override") || "[]");
+  base.forEach((b, i) => {
+    if (!b.id) b.id = "base_" + i;
+  });
   return [...base, ...override];
 }
 
 async function initMainMap() {
-  // Xəritə ilkin boş vəziyyətdə açılır, koordinatsız
-  mainMap = L.map('map', { zoomControl: true });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(mainMap);
+  // ❌ Bakı koordinatı yoxdur — boş xəritə
+  mainMap = L.map("map", { zoomControl: true }).setView([0, 0], 2);
 
-  // Default görünüş (yalnız xəritə üçün)
-  mainMap.setView([0, 0], 2);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors",
+  }).addTo(mainMap);
 
   const data = await loadCombinedTraffic();
   populateTrafficMarkers(data);
   setupMapInteractions();
+
+  window.addEventListener("storage", (ev) => {
+    if (ev.key === "urbanflow_refresh") loadCombinedTraffic().then(populateTrafficMarkers);
+  });
 }
 
 function populateTrafficMarkers(data) {
-  markers.forEach(m => mainMap.removeLayer(m));
+  markers.forEach((m) => mainMap.removeLayer(m));
   markers = [];
 
-  data.forEach(item => {
-    if (!item || typeof item.lat !== 'number' || typeof item.lng !== 'number') return;
+  data.forEach((item) => {
+    if (!item || typeof item.lat !== "number" || typeof item.lng !== "number") return;
     const color = trafficColor(item.level);
     const circle = L.circle([item.lat, item.lng], {
       radius: 60 + (item.severity || 1) * 40,
-      color, fillColor: color, fillOpacity: 0.35
+      color,
+      fillColor: color,
+      fillOpacity: 0.35,
     });
-    circle.on('click', () => {
+    circle.on("click", () => {
       L.popup()
         .setLatLng([item.lat, item.lng])
-        .setContent(`<strong>${item.title}</strong><br/>Səviyyə: ${item.level}<br/>${item.description || ''}`)
+        .setContent(
+          `<strong>${item.title}</strong><br/>Səviyyə: ${item.level}<br/>${item.description || ""}`
+        )
         .openOn(mainMap);
     });
     circle.addTo(mainMap);
@@ -61,16 +69,24 @@ function populateTrafficMarkers(data) {
 }
 
 function setupMapInteractions() {
-  const locateBtn = document.getElementById('locate-btn');
+  const locateBtn = document.getElementById("locate-btn");
 
-  async function showMyLocation() {
-    if (!('geolocation' in navigator)) {
-      alert("Geolokasiya bu brauzerdə dəstəklənmir.");
+  async function requestLocation() {
+    if (!("geolocation" in navigator)) {
+      alert("Geolokasiya bu brauzerdə mövcud deyil.");
       return;
     }
 
+    try {
+      const perm = await navigator.permissions.query({ name: "geolocation" });
+      if (perm.state === "denied") {
+        alert("Zəhmət olmasa, bu sayta geolokasiya icazəsi verin.");
+        return;
+      }
+    } catch (_) {}
+
     const prevText = locateBtn ? locateBtn.textContent : "";
-    if (locateBtn) locateBtn.disabled = true, locateBtn.textContent = "Axtarılır…";
+    if (locateBtn) locateBtn.disabled = true, (locateBtn.textContent = "Axtarılır…");
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -78,7 +94,6 @@ function setupMapInteractions() {
         const lng = pos.coords.longitude;
         const acc = pos.coords.accuracy || 25;
 
-        // Əvvəlki təbəqələri təmizlə
         if (userMarker) mainMap.removeLayer(userMarker);
         if (userCircle) mainMap.removeLayer(userCircle);
 
@@ -88,19 +103,18 @@ function setupMapInteractions() {
           radius: radius,
           color: "#0b3d91",
           fillColor: "#3b82f6",
-          fillOpacity: 0.3
+          fillOpacity: 0.3,
         }).addTo(mainMap);
 
-        // İstifadəçinin real mövqeyinə zoom et
-        mainMap.setView([lat, lng], 17, { animate: true });
+        mainMap.flyTo([lat, lng], 17, { animate: true, duration: 0.8 });
         userMarker.bindPopup("📍 Hazırkı mövqeyin təyin olundu ✅").openPopup();
 
-        if (locateBtn) locateBtn.disabled = false, locateBtn.textContent = prevText || "Məni göstər";
+        if (locateBtn) locateBtn.disabled = false, (locateBtn.textContent = prevText || "Məni göstər");
       },
       (err) => {
-        console.warn("Geolocation error:", err);
+        console.warn("Geo error:", err);
         alert("Mövqeyi tapmaq mümkün olmadı: " + err.message);
-        if (locateBtn) locateBtn.disabled = false, locateBtn.textContent = prevText || "Məni göstər";
+        if (locateBtn) locateBtn.disabled = false, (locateBtn.textContent = prevText || "Məni göstər");
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
@@ -109,12 +123,22 @@ function setupMapInteractions() {
   if (locateBtn) {
     locateBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      showMyLocation();
+      requestLocation();
     });
   }
+
+  mainMap.on("locationerror", () =>
+    alert("Mövqe təyin edilə bilmədi. Zəhmət olmasa icazəni aktiv edin.")
+  );
 }
 
-// Xəritə yalnız səhifədə varsa işə düşür
+// Kiçik xəritə (digər səhifələrdə)
+function initSmallMap(containerId) {
+  const m = L.map(containerId).setView([0, 0], 2);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(m);
+  return m;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("map")) initMainMap();
 });
