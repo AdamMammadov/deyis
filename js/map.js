@@ -136,7 +136,7 @@ function setupMapInteractions() {
 }
 
 function initSmallMap(containerId) {
-  const m = L.map(containerId).setView([40.395, 49.85], 12);
+  const m = L.map(containerId).setView([40.4766738,49.8352748], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(m);
   return m;
 }
@@ -144,3 +144,4 @@ function initSmallMap(containerId) {
 document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('map')) initMainMap();
 });
+
