@@ -1,4 +1,4 @@
-// map.js — final stable version (real "Məni göstər" without fixed coords)
+// map.js — updated with accurate "Məni göstər" feature + improved map handling
 let mainMap;
 let markers = [];
 let userMarker = null;
@@ -10,135 +10,136 @@ async function fetchJSON(path) {
 }
 
 function trafficColor(level) {
-  if (level === "high") return "#e02424";
-  if (level === "medium") return "#ffb020";
-  return "#22c55e";
+  if (level === 'high') return '#e02424';
+  if (level === 'medium') return '#ffb020';
+  return '#22c55e';
 }
 
 async function loadCombinedTraffic() {
-  const base = await fetchJSON("assets/data/traffic.json").catch(() => []);
-  const override = JSON.parse(localStorage.getItem("urbanflow_traffic_override") || "[]");
+  const base = await fetchJSON('assets/data/traffic.json').catch(() => []);
+  const override = JSON.parse(localStorage.getItem('urbanflow_traffic_override') || '[]');
   base.forEach((b, i) => {
-    if (!b.id) b.id = "base_" + i;
+    if (!b.id) b.id = 'base_' + i;
   });
   return [...base, ...override];
 }
 
 async function initMainMap() {
-  // ❌ Bakı koordinatı yoxdur — boş xəritə
-  mainMap = L.map("map", { zoomControl: true }).setView([0, 0], 2);
-
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  mainMap = L.map('map', { zoomControl: true }).setView([40.395, 49.85], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors",
+    attribution: '&copy; OpenStreetMap contributors'
   }).addTo(mainMap);
 
   const data = await loadCombinedTraffic();
   populateTrafficMarkers(data);
   setupMapInteractions();
 
-  window.addEventListener("storage", (ev) => {
-    if (ev.key === "urbanflow_refresh") loadCombinedTraffic().then(populateTrafficMarkers);
+  // dinamik yenilənmə
+  window.addEventListener('storage', (ev) => {
+    if (ev.key === 'urbanflow_refresh') {
+      loadCombinedTraffic().then(populateTrafficMarkers);
+    }
+    if (ev.key === 'urbanflow_focus') {
+      try {
+        const obj = JSON.parse(ev.newValue);
+        if (obj && obj.lat && obj.lng) {
+          mainMap.setView([obj.lat, obj.lng], 15, { animate: true });
+          L.popup().setLatLng([obj.lat, obj.lng]).setContent(`<strong>${obj.title || 'Point'}</strong>`).openOn(mainMap);
+        }
+      } catch (e) {}
+    }
   });
 }
 
 function populateTrafficMarkers(data) {
-  markers.forEach((m) => mainMap.removeLayer(m));
+  // köhnə markerləri sil
+  markers.forEach(m => mainMap.removeLayer(m));
   markers = [];
 
-  data.forEach((item) => {
-    if (!item || typeof item.lat !== "number" || typeof item.lng !== "number") return;
+  data.forEach(item => {
     const color = trafficColor(item.level);
     const circle = L.circle([item.lat, item.lng], {
       radius: 60 + (item.severity || 1) * 40,
       color,
       fillColor: color,
-      fillOpacity: 0.35,
+      fillOpacity: 0.35
     });
-    circle.on("click", () => {
+
+    circle.on('click', () => {
       L.popup()
         .setLatLng([item.lat, item.lng])
-        .setContent(
-          `<strong>${item.title}</strong><br/>Səviyyə: ${item.level}<br/>${item.description || ""}`
-        )
+        .setContent(`<strong>${item.title}</strong><br/>Səviyyə: ${item.level}<br/>Təsir: ${item.description || ''}`)
         .openOn(mainMap);
     });
+
     circle.addTo(mainMap);
     markers.push(circle);
   });
+
+  // göstəriciləri yenilə
+  const active = data.filter(d => d.level === 'high').length;
+  const nonLow = data.filter(d => d.level !== 'low').length;
+  const avgSpeed = Math.max(20, 60 - data.reduce((s, i) => s + ((i.severity || 1) * 5), 0));
+
+  if (document.getElementById('active-jams')) document.getElementById('active-jams').innerText = active;
+  if (document.getElementById('alerts-count')) document.getElementById('alerts-count').innerText = nonLow;
+  if (document.getElementById('avg-speed')) document.getElementById('avg-speed').innerText = `${avgSpeed.toFixed(0)}`;
 }
 
 function setupMapInteractions() {
-  const locateBtn = document.getElementById("locate-btn");
-
-  async function requestLocation() {
-    if (!("geolocation" in navigator)) {
-      alert("Geolokasiya bu brauzerdə mövcud deyil.");
-      return;
-    }
-
-    try {
-      const perm = await navigator.permissions.query({ name: "geolocation" });
-      if (perm.state === "denied") {
-        alert("Zəhmət olmasa, bu sayta geolokasiya icazəsi verin.");
-        return;
-      }
-    } catch (_) {}
-
-    const prevText = locateBtn ? locateBtn.textContent : "";
-    if (locateBtn) locateBtn.disabled = true, (locateBtn.textContent = "Axtarılır…");
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        const acc = pos.coords.accuracy || 25;
-
-        if (userMarker) mainMap.removeLayer(userMarker);
-        if (userCircle) mainMap.removeLayer(userCircle);
-
-        const radius = Math.min(Math.max(acc, 10), 200);
-        userMarker = L.marker([lat, lng], { title: "Sənin mövqeyin" }).addTo(mainMap);
-        userCircle = L.circle([lat, lng], {
-          radius: radius,
-          color: "#0b3d91",
-          fillColor: "#3b82f6",
-          fillOpacity: 0.3,
-        }).addTo(mainMap);
-
-        mainMap.flyTo([lat, lng], 17, { animate: true, duration: 0.8 });
-        userMarker.bindPopup("📍 Hazırkı mövqeyin təyin olundu ✅").openPopup();
-
-        if (locateBtn) locateBtn.disabled = false, (locateBtn.textContent = prevText || "Məni göstər");
-      },
-      (err) => {
-        console.warn("Geo error:", err);
-        alert("Mövqeyi tapmaq mümkün olmadı: " + err.message);
-        if (locateBtn) locateBtn.disabled = false, (locateBtn.textContent = prevText || "Məni göstər");
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  }
-
+  const locateBtn = document.getElementById('locate-btn');
   if (locateBtn) {
-    locateBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      requestLocation();
+    locateBtn.addEventListener('click', () => {
+      if (!mainMap) return;
+      mainMap.locate({ setView: true, maxZoom: 15, watch: false });
     });
   }
 
-  mainMap.on("locationerror", () =>
-    alert("Mövqe təyin edilə bilmədi. Zəhmət olmasa icazəni aktiv edin.")
-  );
+  mainMap.on('locationfound', (e) => {
+    const radius = e.accuracy;
+    if (userMarker) mainMap.removeLayer(userMarker);
+    if (userCircle) mainMap.removeLayer(userCircle);
+
+    userMarker = L.marker(e.latlng, {
+      title: "Sənin mövqeyin"
+    }).addTo(mainMap);
+
+    userCircle = L.circle(e.latlng, {
+      radius: radius,
+      color: '#0b3d91',
+      fillColor: '#3b82f6',
+      fillOpacity: 0.3
+    }).addTo(mainMap);
+
+    L.popup()
+      .setLatLng(e.latlng)
+      .setContent("Hazırkı mövqeyin təyin olundu ✅")
+      .openOn(mainMap);
+  });
+
+  mainMap.on('locationerror', () => {
+    alert("Mövqe təyin edilə bilmədi. Zəhmət olmasa icazə verin və yenidən cəhd edin.");
+  });
+
+  const filterEl = document.getElementById('traffic-filter');
+  if (filterEl) {
+    filterEl.addEventListener('change', async (e) => {
+      const v = e.target.value;
+      const data = await loadCombinedTraffic();
+      const filtered = v === 'all' ? data : data.filter(d => d.level === v);
+      populateTrafficMarkers(filtered);
+    });
+  }
 }
 
-// Kiçik xəritə (digər səhifələrdə)
+// kiçik xəritə (digər səhifələrdə istifadə olunur)
 function initSmallMap(containerId) {
-  const m = L.map(containerId).setView([0, 0], 2);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(m);
+  const m = L.map(containerId).setView([40.395, 49.85], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(m);
   return m;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (document.getElementById("map")) initMainMap();
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('map')) initMainMap();
 });
