@@ -1,4 +1,3 @@
-// map.js — updated with accurate "Məni göstər" feature + improved map handling
 let mainMap;
 let markers = [];
 let userMarker = null;
@@ -35,7 +34,6 @@ async function initMainMap() {
   populateTrafficMarkers(data);
   setupMapInteractions();
 
-  // dinamik yenilənmə
   window.addEventListener('storage', (ev) => {
     if (ev.key === 'urbanflow_refresh') {
       loadCombinedTraffic().then(populateTrafficMarkers);
@@ -44,7 +42,7 @@ async function initMainMap() {
       try {
         const obj = JSON.parse(ev.newValue);
         if (obj && obj.lat && obj.lng) {
-          mainMap.setView([obj.lat, obj.lng], 15, { animate: true });
+          mainMap.setView([obj.lat, obj.lng], 16, { animate: true });
           L.popup().setLatLng([obj.lat, obj.lng]).setContent(`<strong>${obj.title || 'Point'}</strong>`).openOn(mainMap);
         }
       } catch (e) {}
@@ -53,7 +51,6 @@ async function initMainMap() {
 }
 
 function populateTrafficMarkers(data) {
-  // köhnə markerləri sil
   markers.forEach(m => mainMap.removeLayer(m));
   markers = [];
 
@@ -77,14 +74,13 @@ function populateTrafficMarkers(data) {
     markers.push(circle);
   });
 
-  // göstəriciləri yenilə
   const active = data.filter(d => d.level === 'high').length;
   const nonLow = data.filter(d => d.level !== 'low').length;
   const avgSpeed = Math.max(20, 60 - data.reduce((s, i) => s + ((i.severity || 1) * 5), 0));
 
-  if (document.getElementById('active-jams')) document.getElementById('active-jams').innerText = active;
-  if (document.getElementById('alerts-count')) document.getElementById('alerts-count').innerText = nonLow;
-  if (document.getElementById('avg-speed')) document.getElementById('avg-speed').innerText = `${avgSpeed.toFixed(0)}`;
+  document.getElementById('active-jams').innerText = active;
+  document.getElementById('alerts-count').innerText = nonLow;
+  document.getElementById('avg-speed').innerText = `${avgSpeed.toFixed(0)}`;
 }
 
 function setupMapInteractions() {
@@ -92,28 +88,34 @@ function setupMapInteractions() {
   if (locateBtn) {
     locateBtn.addEventListener('click', () => {
       if (!mainMap) return;
-      mainMap.locate({ setView: true, maxZoom: 15, watch: false });
+      mainMap.locate({ setView: false, watch: false, enableHighAccuracy: true });
     });
   }
 
   mainMap.on('locationfound', (e) => {
-    const radius = e.accuracy;
+    const latlng = e.latlng;
+
+    // köhnə marker və dairəni sil
     if (userMarker) mainMap.removeLayer(userMarker);
     if (userCircle) mainMap.removeLayer(userCircle);
 
-    userMarker = L.marker(e.latlng, {
-      title: "Sənin mövqeyin"
-    }).addTo(mainMap);
+    // yeni marker əlavə et
+    userMarker = L.marker(latlng, { title: "Sənin mövqeyin" }).addTo(mainMap);
 
-    userCircle = L.circle(e.latlng, {
-      radius: radius,
+    // dəqiqlik radiusu (stabil, məsələn 80m)
+    const fixedRadius = 80;
+    userCircle = L.circle(latlng, {
+      radius: fixedRadius,
       color: '#0b3d91',
       fillColor: '#3b82f6',
       fillOpacity: 0.3
     }).addTo(mainMap);
 
+    // yaxınlaşdırma
+    mainMap.setView(latlng, 17, { animate: true });
+
     L.popup()
-      .setLatLng(e.latlng)
+      .setLatLng(latlng)
       .setContent("Hazırkı mövqeyin təyin olundu ✅")
       .openOn(mainMap);
   });
@@ -133,7 +135,6 @@ function setupMapInteractions() {
   }
 }
 
-// kiçik xəritə (digər səhifələrdə istifadə olunur)
 function initSmallMap(containerId) {
   const m = L.map(containerId).setView([40.395, 49.85], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(m);
