@@ -1,4 +1,4 @@
-// map.js — final stable version (accurate "Məni göstər" across devices)
+// map.js — FINAL version, no static coords, pure dynamic "Məni göstər"
 let mainMap;
 let markers = [];
 let userMarker = null;
@@ -23,20 +23,19 @@ async function loadCombinedTraffic() {
 }
 
 async function initMainMap() {
-  mainMap = L.map('map', { zoomControl: true }).setView([40.395, 49.85], 12);
+  // Xəritə ilkin boş vəziyyətdə açılır, koordinatsız
+  mainMap = L.map('map', { zoomControl: true });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(mainMap);
 
+  // Default görünüş (yalnız xəritə üçün)
+  mainMap.setView([0, 0], 2);
+
   const data = await loadCombinedTraffic();
   populateTrafficMarkers(data);
   setupMapInteractions();
-
-  // react to updates from other tabs
-  window.addEventListener('storage', (ev) => {
-    if (ev.key === 'urbanflow_refresh') loadCombinedTraffic().then(populateTrafficMarkers);
-  });
 }
 
 function populateTrafficMarkers(data) {
@@ -64,20 +63,11 @@ function populateTrafficMarkers(data) {
 function setupMapInteractions() {
   const locateBtn = document.getElementById('locate-btn');
 
-  async function requestLocation() {
+  async function showMyLocation() {
     if (!('geolocation' in navigator)) {
-      alert("Geolokasiya bu brauzerdə mövcud deyil.");
+      alert("Geolokasiya bu brauzerdə dəstəklənmir.");
       return;
     }
-
-    // Check permission (modern browsers)
-    try {
-      const perm = await navigator.permissions.query({ name: "geolocation" });
-      if (perm.state === "denied") {
-        alert("Zəhmət olmasa, bu sayta geolokasiya icazəsi verin.");
-        return;
-      }
-    } catch (_) { /* older browsers ignore */ }
 
     const prevText = locateBtn ? locateBtn.textContent : "";
     if (locateBtn) locateBtn.disabled = true, locateBtn.textContent = "Axtarılır…";
@@ -88,6 +78,7 @@ function setupMapInteractions() {
         const lng = pos.coords.longitude;
         const acc = pos.coords.accuracy || 25;
 
+        // Əvvəlki təbəqələri təmizlə
         if (userMarker) mainMap.removeLayer(userMarker);
         if (userCircle) mainMap.removeLayer(userCircle);
 
@@ -100,13 +91,14 @@ function setupMapInteractions() {
           fillOpacity: 0.3
         }).addTo(mainMap);
 
-        mainMap.flyTo([lat, lng], 17, { animate: true, duration: 0.8 });
+        // İstifadəçinin real mövqeyinə zoom et
+        mainMap.setView([lat, lng], 17, { animate: true });
         userMarker.bindPopup("📍 Hazırkı mövqeyin təyin olundu ✅").openPopup();
 
         if (locateBtn) locateBtn.disabled = false, locateBtn.textContent = prevText || "Məni göstər";
       },
       (err) => {
-        console.warn("Geo error:", err);
+        console.warn("Geolocation error:", err);
         alert("Mövqeyi tapmaq mümkün olmadı: " + err.message);
         if (locateBtn) locateBtn.disabled = false, locateBtn.textContent = prevText || "Məni göstər";
       },
@@ -117,22 +109,12 @@ function setupMapInteractions() {
   if (locateBtn) {
     locateBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      requestLocation();
+      showMyLocation();
     });
   }
-
-  // Fallback if leaflet locate used somewhere
-  mainMap.on("locationerror", () =>
-    alert("Mövqe təyin edilə bilmədi. Zəhmət olmasa icazəni aktiv edin.")
-  );
 }
 
-function initSmallMap(containerId) {
-  const m = L.map(containerId).setView([40.395, 49.85], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(m);
-  return m;
-}
-
+// Xəritə yalnız səhifədə varsa işə düşür
 document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("map")) initMainMap();
 });
