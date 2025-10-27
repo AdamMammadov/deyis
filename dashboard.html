@@ -7,12 +7,76 @@
 
   <link rel="stylesheet" href="css/style.css" />
   <style>
-    .admin-grid{display:grid;grid-template-columns:1fr 420px;gap:14px;padding:16px}
-    .panel.small{padding:12px}
-    .user-info{display:flex;justify-content:space-between;align-items:center;padding:8px;background:#0b3d91;color:#fff;border-radius:6px;margin-bottom:10px}
-    .form-row{display:flex;gap:8px;margin-bottom:8px}
-    .form-row input{flex:1;padding:8px;border:1px solid #ccc;border-radius:6px}
-    .btn{background:#0b3d91;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 14px;
+      padding: 16px;
+    }
+    .panel.small { padding: 12px }
+    .user-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      background: #0b3d91;
+      color: #fff;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    .form-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .form-row input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .btn {
+      background: #0b3d91;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .traffic-stats {
+      display: flex;
+      gap: 12px;
+      margin: 12px 0;
+      flex-wrap: wrap;
+    }
+    .stat-box {
+      flex: 1;
+      min-width: 120px;
+      background: #f5f7fb;
+      border: 1px solid #ccd3e2;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+    .traffic-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .traffic-item {
+      background: #f8fafc;
+      border: 1px solid #d0d7e6;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .traffic-item strong { color: #0b3d91; }
+    .footer {
+      text-align: center;
+      padding: 12px;
+      background: #0b3d91;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -31,12 +95,47 @@
     </div>
 
     <div class="admin-grid">
+      <!-- TRAFİK PANELİ -->
       <section class="panel">
         <h3>Trafik Məlumatları</h3>
-        <p>Burada real trafik məlumatlarını idarə edə bilərsiniz.</p>
-        <div id="trafficList"></div>
+        <p>Burada real vaxt trafik göstəriciləri və hadisə məlumatlarını görə bilərsiniz.</p>
+
+        <div class="traffic-stats">
+          <div class="stat-box">
+            <div><strong id="stat-jams">4</strong></div>
+            <small>Aktiv tıxac</small>
+          </div>
+          <div class="stat-box">
+            <div><strong id="stat-speed">42 km/saat</strong></div>
+            <small>Orta sürət</small>
+          </div>
+          <div class="stat-box">
+            <div><strong id="stat-updated">10:45</strong></div>
+            <small>Son yenilənmə</small>
+          </div>
+        </div>
+
+        <div class="traffic-list" id="trafficList">
+          <div class="traffic-item">
+            <strong>Böyük prospekt</strong> — yüksək sıxlıq (sev: 4) <br/>
+            <small>İş saatlarında tıxac müşahidə olunur.</small>
+          </div>
+          <div class="traffic-item">
+            <strong>3-cü mikrorayon</strong> — orta sıxlıq (sev: 2) <br/>
+            <small>Axşam saatlarında yüklənmə artır.</small>
+          </div>
+          <div class="traffic-item">
+            <strong>Sahil yolu</strong> — az sıxlıq (sev: 1) <br/>
+            <small>Yol açıqdır, hərəkət normaldır.</small>
+          </div>
+          <div class="traffic-item">
+            <strong>Nizami küçəsi</strong> — yüksək sıxlıq (sev: 5) <br/>
+            <small>Qəza nəticəsində tıxac yaranıb.</small>
+          </div>
+        </div>
       </section>
 
+      <!-- HESAB PANELİ -->
       <aside class="panel small">
         <h3>Hesab Ayarları</h3>
         <div class="form-row">
@@ -77,7 +176,3 @@
   </script>
 </body>
 </html>
-
-
-
-
