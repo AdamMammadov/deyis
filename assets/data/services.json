@@ -1,5 +1,29 @@
 [
-  {"id":"s1","name":"Nərimanov Auto Servis","lat":40.382,"lng":49.831,"rating":4.6,"price":"30-50 AZN"},
-  {"id":"s2","name":"Xətai Service Center","lat":40.398,"lng":49.828,"rating":4.2,"price":"25-60 AZN"},
-  {"id":"s3","name":"Sahil Avto","lat":40.403,"lng":49.889,"rating":4.8,"price":"40-80 AZN"}
+  {
+    "id": "s1",
+    "name": "Nərimanov Auto Servis",
+    "lat": 40.382,
+    "lng": 49.831,
+    "rating": 4.6,
+    "price": "30-50 AZN",
+    "desc": "Nərimanov rayonunda yerləşən bu servis avtomobil mühərriklərinin, əyləc sistemlərinin və texniki baxış xidmətlərinin təcrübəli ustalar tərəfindən həyata keçirildiyi etibarlı mərkəzdir."
+  },
+  {
+    "id": "s2",
+    "name": "Xətai Service Center",
+    "lat": 40.398,
+    "lng": 49.828,
+    "rating": 4.2,
+    "price": "25-60 AZN",
+    "desc": "Xətai ərazisində fəaliyyət göstərən bu servis sürətli yağ dəyişimi, təkər balansı və kondisioner sistemlərinin təmiri üzrə ixtisaslaşıb."
+  },
+  {
+    "id": "s3",
+    "name": "Sahil Avto",
+    "lat": 40.403,
+    "lng": 49.889,
+    "rating": 4.8,
+    "price": "40-80 AZN",
+    "desc": "Premium səviyyəli xidmətlər təklif edən Sahil Avto müasir diaqnostika avadanlıqları ilə kompleks texniki baxış və təmir işləri həyata keçirir."
+  }
 ]
