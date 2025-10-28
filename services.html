@@ -5,6 +5,82 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Servis Mərkəzləri — UrbanFlow</title>
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* 🔹 Əlavə dizayn düzəlişləri rezervasiya hissəsi üçün */
+    form#reserve-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    form#reserve-form label {
+      display: flex;
+      flex-direction: column;
+      font-weight: 500;
+    }
+
+    form#reserve-form input,
+    form#reserve-form select {
+      margin-top: 4px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    #reserve-result {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    #reserve-result.success {
+      background: #e6f7e6;
+      color: #0f5132;
+      border: 1px solid #bcd5b3;
+    }
+
+    #reserve-result.error {
+      background: #fde8e8;
+      color: #842029;
+      border: 1px solid #f5c2c7;
+    }
+
+    .services-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .service {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    .service strong {
+      font-size: 1.05rem;
+    }
+
+    .service .muted {
+      color: #777;
+      font-size: 0.9rem;
+    }
+
+    .service p {
+      margin: 6px 0 0 0;
+      color: #444;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .service button {
+      margin-top: 6px;
+    }
+  </style>
 </head>
 
 <body>
@@ -16,19 +92,24 @@
   </header>
 
   <main class="container">
+    <!-- 🔹 Sol panel: Servis mərkəzləri -->
     <section class="panel">
       <h2>Servis mərkəzləri</h2>
       <div id="services-list" class="services-list"></div>
     </section>
 
+    <!-- 🔹 Sağ panel: Rezervasiya -->
     <section class="panel">
       <h2>Rezervasiya</h2>
       <form id="reserve-form">
         <label>Servis:
           <select id="service-select" required></select>
         </label>
-        <label>Ad — Soyad:
-          <input id="cust-name" required />
+        <label>Ad:
+          <input id="reserve-name" required placeholder="Adınızı daxil edin" />
+        </label>
+        <label>Soyad:
+          <input id="reserve-surname" required placeholder="Soyadınızı daxil edin" />
         </label>
         <label>Tarix:
           <input id="reserve-date" type="date" required />
@@ -38,7 +119,7 @@
         </label>
         <button type="submit">Rezerv et</button>
       </form>
-      <div id="reserve-result" style="margin-top:10px;font-weight:bold;"></div>
+      <div id="reserve-result"></div>
     </section>
   </main>
 
@@ -58,71 +139,5 @@
   <script src="js/auth.js"></script>
   <script src="js/firestore-sync.js"></script>
   <script src="js/main.js"></script>
-
-  <script>
-  // ✅ Tam uyğunlaşdırılmış submit handler — makeReservation və ya undefined diaqnozu ilə
-  window.addEventListener('load', async () => {
-    console.log("✅ Səhifə tam yükləndi, Firebase yoxlanır...");
-
-    await new Promise(r => setTimeout(r, 600));
-
-    console.log("🔥 makeReservation tipi:", typeof window.makeReservation);
-    console.log("🔥 window.UFService varmı:", !!window.UFService);
-    console.log("🔥 urbanflowFirebase varmı:", !!window.urbanflowFirebase);
-
-    // Servisləri yüklə (əgər varsa)
-    if (typeof loadServicesUI === 'function') {
-      try { await loadServicesUI(); } catch (e) { console.warn("loadServicesUI xətası:", e); }
-    }
-
-    // 🔹 Rezerv submit
-    document.getElementById('reserve-form').addEventListener('submit', async e => {
-      e.preventDefault();
-
-      const id = document.getElementById('service-select').value;
-      const name = document.getElementById('cust-name').value.trim();
-      const date = document.getElementById('reserve-date').value;
-      const time = document.getElementById('reserve-time').value;
-
-      console.log("📝 Form submit edildi:", { id, name, date, time });
-
-      if (!id || !name || !date || !time) {
-        alert("⚠️ Zəhmət olmasa bütün xanaları doldurun!");
-        return;
-      }
-
-      try {
-        if (typeof window.makeReservation !== 'function') {
-          console.error("❌ makeReservation tapılmadı!");
-          document.getElementById('reserve-result').innerText =
-            "❌ Xəta: makeReservation funksiyası tapılmadı!";
-          return;
-        }
-
-        const res = await window.makeReservation({ serviceId: id, name, date, time });
-        console.log("🎯 makeReservation nəticəsi:", res);
-
-        if (!res) {
-          document.getElementById('reserve-result').innerText =
-            "❌ makeReservation nəticəsi undefined gəldi!";
-          return;
-        }
-
-        document.getElementById('reserve-result').innerHTML =
-          res.message || JSON.stringify(res);
-
-        if (res.ok && typeof speakText === 'function') {
-          speakText(`Rezervasiya uğurla yaradıldı. Təşəkkürlər, ${name}.`);
-        }
-      } catch (err) {
-        console.error("❌ Rezervasiya zamanı xəta:", err);
-        document.getElementById('reserve-result').innerText =
-          "❌ Xəta: " + (err.message || err);
-      }
-    });
-  });
-  </script>
 </body>
 </html>
-
-
