@@ -7,6 +7,13 @@
   <link rel="stylesheet" href="css/style.css" />
   <style>
     /* 🔹 Əlavə dizayn düzəlişləri rezervasiya hissəsi üçün */
+    main.container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      padding: 20px;
+    }
+
     form#reserve-form {
       display: flex;
       flex-direction: column;
@@ -27,10 +34,26 @@
       border-radius: 6px;
     }
 
+    form#reserve-form button {
+      background: #004aad;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+
+    form#reserve-form button:hover {
+      background: #003580;
+    }
+
     #reserve-result {
       margin-top: 12px;
       padding: 10px;
       border-radius: 6px;
+      font-weight: 500;
     }
 
     #reserve-result.success {
@@ -79,6 +102,17 @@
 
     .service button {
       margin-top: 6px;
+      background: #004aad;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .service button:hover {
+      background: #003580;
     }
   </style>
 </head>
@@ -132,12 +166,94 @@
   <!-- ✅ Firebase init -->
   <script src="js/firebase-init.js"></script>
 
-  <!-- ✅ Digər skriptlər -->
-  <script src="js/service.js"></script>
-  <script src="js/i18n.js"></script>
-  <script src="js/alerts.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/firestore-sync.js"></script>
-  <script src="js/main.js"></script>
+  <!-- ✅ Servis JS -->
+  <script>
+  console.log("🧭 service.js daxili versiya yükləndi");
+
+  async function loadServicesUI() {
+    try {
+      const data = await fetch("assets/data/services.json").then(r => r.json());
+      const list = document.getElementById("services-list");
+      const sel = document.getElementById("service-select");
+      list.innerHTML = "";
+      sel.innerHTML = "";
+
+      data.forEach(s => {
+        const div = document.createElement("div");
+        div.className = "service";
+        div.innerHTML = `
+          <div>
+            <strong>${s.name}</strong>
+            <div class="muted">${s.price} · ⭐ ${s.rating}</div>
+            <p>${s.desc || "Bu servis mərkəzi avtomobil texniki baxışı, yağ dəyişikliyi və ümumi diaqnostika xidmətləri təklif edir."}</p>
+          </div>
+          <div><button onclick="fillReserve('${s.id}')">Rezerv et</button></div>
+        `;
+        list.appendChild(div);
+
+        const opt = document.createElement("option");
+        opt.value = s.id;
+        opt.textContent = `${s.name} (${s.price})`;
+        sel.appendChild(opt);
+      });
+    } catch (err) {
+      console.error("❌ Servis siyahısı yüklənmədi:", err);
+      alert("Servis siyahısı yüklənmədi.");
+    }
+  }
+
+  function fillReserve(id) {
+    const sel = document.getElementById("service-select");
+    sel.value = id;
+    window.scrollTo({ top: document.getElementById("reserve-form").offsetTop, behavior: "smooth" });
+  }
+
+  async function makeReservation({ serviceId, name, surname, date, time }) {
+    const resultBox = document.getElementById("reserve-result");
+    try {
+      const id = "b" + Date.now();
+      const bookings = JSON.parse(localStorage.getItem("urbanflow_bookings") || "[]");
+      const rec = { id, serviceId, name, surname, date, time };
+      bookings.push(rec);
+      localStorage.setItem("urbanflow_bookings", JSON.stringify(bookings));
+
+      resultBox.className = "success";
+      resultBox.innerHTML = `✅ <b>${name} ${surname}</b> üçün rezervasiya uğurla yaradıldı.<br>ID: <b>${id}</b>`;
+      return { ok: true };
+    } catch (err) {
+      resultBox.className = "error";
+      resultBox.textContent = "❌ Xəta: " + err.message;
+      return { ok: false };
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    loadServicesUI();
+
+    const form = document.getElementById("reserve-form");
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const serviceId = document.getElementById("service-select").value;
+      const name = document.getElementById("reserve-name").value.trim();
+      const surname = document.getElementById("reserve-surname").value.trim();
+      const date = document.getElementById("reserve-date").value;
+      const time = document.getElementById("reserve-time").value;
+      const resultBox = document.getElementById("reserve-result");
+
+      if (!serviceId || !name || !surname || !date || !time) {
+        resultBox.className = "error";
+        resultBox.textContent = "⚠️ Zəhmət olmasa bütün xanaları doldurun!";
+        return;
+      }
+
+      resultBox.className = "";
+      resultBox.textContent = "⏳ Gözləyin, rezervasiya yaradılır...";
+
+      const res = await makeReservation({ serviceId, name, surname, date, time });
+
+      if (res.ok) form.reset();
+    });
+  });
+  </script>
 </body>
 </html>
