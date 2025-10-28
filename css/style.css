@@ -283,3 +283,98 @@ button:hover {
   bottom: 18px;
   opacity: 1;
 }
+
+
+
+
+/* --- SERVİS MƏRKƏZLƏRİ --- */
+.services-list {
+  display: grid;
+  gap: 14px;
+}
+
+.service {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f9fbff;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 8px rgba(11, 61, 145, 0.05);
+  transition: all 0.2s ease;
+}
+
+.service:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(11, 61, 145, 0.12);
+}
+
+.service strong {
+  display: block;
+  font-size: 1.05rem;
+  color: #0b3d91;
+  margin-bottom: 4px;
+}
+
+.service .muted {
+  color: #555;
+  font-size: 0.9rem;
+}
+
+/* --- REZERVASİYA FORMU --- */
+#reserve-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#reserve-form label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+  color: #0b3d91;
+}
+
+#reserve-form input,
+#reserve-form select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-top: 4px;
+  width: 100%;
+}
+
+#reserve-form button {
+  align-self: flex-start;
+  background: #0b3d91;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+#reserve-form button:hover {
+  background: #0d47a1;
+}
+
+/* --- REZERVASİYA NƏTİCƏSİ --- */
+#reserve-result {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+#reserve-result.success {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+#reserve-result.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
