@@ -1,4 +1,4 @@
-// js/service.js — Servis siyahısı və rezervasiya sistemi (sabit versiya)
+// js/service.js — Servis siyahısı və rezervasiya sistemi (sabit və genişləndirilmiş versiya)
 console.log("🧭 service.js yükləndi");
 
 // 🔹 Servis siyahısını yüklə və UI-ya əlavə et
@@ -23,8 +23,13 @@ async function loadServicesUI() {
         <div>
           <strong>${s.name}</strong>
           <div class="muted">${s.price} · ⭐ ${s.rating}</div>
+          <p style="margin-top:6px;font-size:0.9rem;color:#444;">
+            ${s.desc || "Xidmət haqqında əlavə məlumat mövcud deyil."}
+          </p>
         </div>
-        <div><button onclick="fillReserve('${s.id}')">Rezerv et</button></div>
+        <div>
+          <button onclick="fillReserve('${s.id}')">Rezerv et</button>
+        </div>
       `;
       list.appendChild(div);
 
@@ -50,11 +55,11 @@ function fillReserve(id) {
 }
 
 // 🔹 Əsas rezervasiya funksiyası
-async function makeReservation({ serviceId, name, date, time }) {
-  console.log("🚀 makeReservation başladı:", { serviceId, name, date, time });
+async function makeReservation({ serviceId, name, surname, date, time }) {
+  console.log("🚀 makeReservation başladı:", { serviceId, name, surname, date, time });
   try {
     const db = window.urbanflowFirebase?.db;
-    const payload = { serviceId, name, date, time, createdAt: new Date().toISOString() };
+    const payload = { serviceId, name, surname, date, time, createdAt: new Date().toISOString() };
     let id = "";
 
     if (db) {
@@ -65,7 +70,7 @@ async function makeReservation({ serviceId, name, date, time }) {
       });
       id = resRef.id;
       console.log("✅ Firestore yazıldı:", id);
-      return { ok: true, id, message: `✅ Rezervasiya Cloud-da yaradıldı — ID: <b>${id}</b>` };
+      return { ok: true, id, message: `✅ Rezervasiya uğurla yaradıldı!<br>ID: <b>${id}</b>` };
     } else {
       console.warn("⚠️ Firestore tapılmadı — localStorage istifadə olunur.");
       const idLocal = "b" + Date.now();
@@ -74,13 +79,45 @@ async function makeReservation({ serviceId, name, date, time }) {
       bookings.push(rec);
       localStorage.setItem("urbanflow_bookings", JSON.stringify(bookings));
       console.log("💾 Lokal rezervasiya yaradıldı:", rec);
-      return { ok: true, id: idLocal, message: `💾 Rezervasiya lokal olaraq saxlandı — ID: <b>${idLocal}</b>` };
+      return { ok: true, id: idLocal, message: `✅ Rezervasiya yerli yaddaşda saxlanıldı.<br>ID: <b>${idLocal}</b>` };
     }
   } catch (err) {
     console.error("❌ makeReservation xətası:", err);
     return { ok: false, id: null, message: "❌ Xəta: " + (err.message || "Naməlum xəta") };
   }
 }
+
+// 🔹 Rezervasiya formu hadisələri
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("reserve-form");
+  const resultBox = document.getElementById("reserve-result");
+
+  if (form) {
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+
+      const serviceId = document.getElementById("service-select").value;
+      const name = document.getElementById("reserve-name").value.trim();
+      const surname = document.getElementById("reserve-surname").value.trim();
+      const date = document.getElementById("reserve-date").value;
+      const time = document.getElementById("reserve-time").value;
+
+      if (!serviceId || !name || !surname || !date || !time) {
+        resultBox.textContent = "⚠️ Zəhmət olmasa bütün sahələri doldurun.";
+        resultBox.className = "error";
+        return;
+      }
+
+      const res = await makeReservation({ serviceId, name, surname, date, time });
+      resultBox.innerHTML = res.message;
+      resultBox.className = res.ok ? "success" : "error";
+
+      if (res.ok) form.reset();
+    });
+  }
+
+  loadServicesUI();
+});
 
 // 🔹 Lokal rezervasiyaları oxu
 function getBookings() {
