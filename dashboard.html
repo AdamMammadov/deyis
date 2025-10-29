@@ -29,10 +29,34 @@
       flex-wrap: wrap;
     }
 
+    /* 🔹 Profil şəkli bölməsi */
+    .profile-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #f7f9fc;
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccd3e2;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
+    .profile-pic {
+      width: 90px;
+      height: 120px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 2px solid #0b3d91;
+      background: #eaeef7;
+      margin-bottom: 10px;
+    }
+
     .form-row {
       display: flex;
       gap: 8px;
       margin-bottom: 8px;
+      flex-wrap: wrap;
     }
 
     .form-row input {
@@ -92,11 +116,7 @@
     }
 
     @media (min-width: 768px) {
-      /* Böyük ekranlarda bir az məsafə artır */
-      .admin-grid {
-        max-width: 900px;
-        margin: 0 auto;
-      }
+      .admin-grid { max-width: 900px; margin: 0 auto; }
     }
   </style>
 </head>
@@ -117,13 +137,36 @@
     </div>
 
     <div class="admin-grid">
-      <!-- 🔹 HESAB PANELİ yuxarıda -->
+
+      <!-- 🔹 PROFIL ŞƏKLİ VƏ HESAB FUNKSİYALARI -->
       <section class="panel small">
-        <h3>Hesab Ayarları</h3>
+        <h3>Profil Məlumatları</h3>
+
+        <div class="profile-section">
+          <img id="profilePic" src="img/default-avatar.png" alt="Profil şəkli" class="profile-pic" />
+          <input type="file" id="profileFile" accept="image/*" />
+          <button id="btnUploadPhoto" class="btn">Şəkli dəyiş</button>
+        </div>
+
+        <hr style="margin:15px 0; border:none; border-top:1px solid #dce1ea;" />
+
+        <div class="form-row">
+          <input type="email" id="newEmail" placeholder="Yeni email" />
+          <button id="btnChangeEmail" class="btn">Yenilə</button>
+        </div>
+
         <div class="form-row">
           <input type="password" id="newPass" placeholder="Yeni şifrə" />
           <button id="btnChangePass" class="btn">Dəyiş</button>
         </div>
+
+        <div style="margin-top:10px;">
+          <button id="btnDeleteAcc" class="btn" style="background:#b02020;">Hesabı sil</button>
+        </div>
+
+        <p style="margin-top:10px; color:#555; font-size:14px;">
+          🕒 Son giriş: <span id="lastLogin">-</span>
+        </p>
       </section>
 
       <!-- 🔹 TRAFİK PANELİ aşağıda -->
@@ -178,13 +221,12 @@
     document.addEventListener("DOMContentLoaded", async () => {
       const user = await checkAuth(true);
       if (!user) return;
+
       document.getElementById("adminEmail").textContent = user.email;
-
       document.getElementById("logout").addEventListener("click", logout);
-      document.getElementById("go-site").addEventListener("click", () => {
-        window.open("index.html", "_blank");
-      });
+      document.getElementById("go-site").addEventListener("click", () => window.open("index.html", "_blank"));
 
+      // 🔹 Şifrə dəyiş
       document.getElementById("btnChangePass").addEventListener("click", () => {
         const np = document.getElementById("newPass").value.trim();
         if (np.length < 4) return alert("Şifrə ən azı 4 simvol olmalıdır");
@@ -194,6 +236,53 @@
         alert("✅ Şifrə uğurla dəyişdirildi");
         document.getElementById("newPass").value = "";
       });
+
+      // 🔹 Email dəyiş
+      document.getElementById("btnChangeEmail").addEventListener("click", () => {
+        const newEmail = document.getElementById("newEmail").value.trim();
+        if (!newEmail.includes("@")) return alert("Zəhmət olmasa düzgün email daxil et");
+        const user = JSON.parse(localStorage.getItem("urbanflow_user"));
+        user.email = newEmail;
+        localStorage.setItem("urbanflow_user", JSON.stringify(user));
+        document.getElementById("adminEmail").textContent = newEmail;
+        alert("✅ Email uğurla dəyişdirildi");
+      });
+
+      // 🔹 Şəkil yükləmə (base64 saxlanacaq)
+      const imgEl = document.getElementById("profilePic");
+      const fileInput = document.getElementById("profileFile");
+      const btnUpload = document.getElementById("btnUploadPhoto");
+
+      if (user.photo) imgEl.src = user.photo;
+
+      btnUpload.addEventListener("click", () => {
+        const file = fileInput.files[0];
+        if (!file) return alert("Fayl seçin");
+        const reader = new FileReader();
+        reader.onload = e => {
+          imgEl.src = e.target.result;
+          const user = JSON.parse(localStorage.getItem("urbanflow_user"));
+          user.photo = e.target.result;
+          localStorage.setItem("urbanflow_user", JSON.stringify(user));
+          alert("✅ Profil şəkli dəyişdirildi");
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // 🔹 Hesabı sil
+      document.getElementById("btnDeleteAcc").addEventListener("click", () => {
+        if (confirm("Hesab silinsin? Bu əməliyyat geri alına bilməz.")) {
+          localStorage.removeItem("urbanflow_user");
+          alert("🚫 Hesab silindi");
+          window.location.href = "login.html";
+        }
+      });
+
+      // 🔹 Son giriş tarixi
+      const lastLogin = user.lastLogin || new Date().toLocaleString("az-AZ");
+      document.getElementById("lastLogin").textContent = lastLogin;
+      user.lastLogin = lastLogin;
+      localStorage.setItem("urbanflow_user", JSON.stringify(user));
     });
   </script>
 </body>
