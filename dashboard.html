@@ -7,13 +7,16 @@
 
   <link rel="stylesheet" href="css/style.css" />
   <style>
+    /* 🔹 Layout-u yuxarıdan-aşağıya düzülüşə çeviririk */
     .admin-grid {
-      display: grid;
-      grid-template-columns: 1fr 420px;
-      gap: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
       padding: 16px;
     }
+
     .panel.small { padding: 12px }
+
     .user-info {
       display: flex;
       justify-content: space-between;
@@ -23,18 +26,22 @@
       color: #fff;
       border-radius: 6px;
       margin-bottom: 10px;
+      flex-wrap: wrap;
     }
+
     .form-row {
       display: flex;
       gap: 8px;
       margin-bottom: 8px;
     }
+
     .form-row input {
       flex: 1;
       padding: 8px;
       border: 1px solid #ccc;
       border-radius: 6px;
     }
+
     .btn {
       background: #0b3d91;
       color: #fff;
@@ -43,12 +50,14 @@
       border-radius: 6px;
       cursor: pointer;
     }
+
     .traffic-stats {
       display: flex;
       gap: 12px;
       margin: 12px 0;
       flex-wrap: wrap;
     }
+
     .stat-box {
       flex: 1;
       min-width: 120px;
@@ -58,27 +67,40 @@
       padding: 10px;
       text-align: center;
     }
+
     .traffic-list {
       margin-top: 12px;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
+
     .traffic-item {
       background: #f8fafc;
       border: 1px solid #d0d7e6;
       border-radius: 6px;
       padding: 10px;
     }
+
     .traffic-item strong { color: #0b3d91; }
+
     .footer {
       text-align: center;
       padding: 12px;
       background: #0b3d91;
       color: #fff;
     }
+
+    @media (min-width: 768px) {
+      /* Böyük ekranlarda bir az məsafə artır */
+      .admin-grid {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+    }
   </style>
 </head>
+
 <body>
   <header class="topbar">
     <div class="brand" onclick="window.location.href='index.html'">UrbanFlow</div>
@@ -95,7 +117,16 @@
     </div>
 
     <div class="admin-grid">
-      <!-- TRAFİK PANELİ -->
+      <!-- 🔹 HESAB PANELİ yuxarıda -->
+      <section class="panel small">
+        <h3>Hesab Ayarları</h3>
+        <div class="form-row">
+          <input type="password" id="newPass" placeholder="Yeni şifrə" />
+          <button id="btnChangePass" class="btn">Dəyiş</button>
+        </div>
+      </section>
+
+      <!-- 🔹 TRAFİK PANELİ aşağıda -->
       <section class="panel">
         <h3>Trafik Məlumatları</h3>
         <p>Burada real vaxt trafik göstəriciləri və hadisə məlumatlarını görə bilərsiniz.</p>
@@ -134,15 +165,6 @@
           </div>
         </div>
       </section>
-
-      <!-- HESAB PANELİ -->
-      <aside class="panel small">
-        <h3>Hesab Ayarları</h3>
-        <div class="form-row">
-          <input type="password" id="newPass" placeholder="Yeni şifrə" />
-          <button id="btnChangePass" class="btn">Dəyiş</button>
-        </div>
-      </aside>
     </div>
   </main>
 
@@ -154,7 +176,7 @@
   <script src="js/admin-dashboard.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
-      const user = await checkAuth(true); // login yoxlaması
+      const user = await checkAuth(true);
       if (!user) return;
       document.getElementById("adminEmail").textContent = user.email;
 
