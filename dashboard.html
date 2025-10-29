@@ -7,21 +7,10 @@
 
   <link rel="stylesheet" href="css/style.css" />
   <style>
-    /* 🔹 İki sütunlu layout: solda profil, sağda trafik məlumatı */
-    .admin-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      padding: 16px;
+    body {
+      background: #f4f7fb;
+      font-family: "Segoe UI", sans-serif;
     }
-
-    @media (max-width: 768px) {
-      .admin-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .panel.small { padding: 16px; }
 
     .user-info {
       display: flex;
@@ -35,15 +24,38 @@
       flex-wrap: wrap;
     }
 
-    /* 🔹 Profil hissəsi */
+    /* 🔹 Əsas layout: profil solda, trafik sağda */
+    .admin-grid {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 12px;
+    }
+
+    .left-panel {
+      flex: 1.2;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .right-panel {
+      flex: 1;
+    }
+
+    .panel {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #d8dfea;
+      padding: 16px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
     .profile-section {
       display: flex;
       flex-direction: column;
       align-items: center;
-      background: #f7f9fc;
-      padding: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccd3e2;
       margin-bottom: 16px;
     }
 
@@ -78,10 +90,19 @@
       padding: 8px 12px;
       border-radius: 6px;
       cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: #082e6d;
     }
 
     .btn-danger {
       background: #b02020;
+    }
+
+    .btn-danger:hover {
+      background: #941b1b;
     }
 
     .traffic-stats {
@@ -122,6 +143,13 @@
       padding: 12px;
       background: #0b3d91;
       color: #fff;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .admin-grid {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
@@ -135,81 +163,83 @@
     </div>
   </header>
 
-  <main class="container" style="padding:12px">
+  <main class="container">
     <div class="user-info">
       <div><strong id="adminEmail"></strong></div>
       <div>Admin Panel</div>
     </div>
 
     <div class="admin-grid">
-      <!-- 🔹 SOL — PROFİL və HESAB MƏLUMATLARI -->
-      <section class="panel small">
-        <h3>Profil Məlumatları</h3>
+      <!-- 🔹 SOL PANEL -->
+      <div class="left-panel">
+        <section class="panel">
+          <h3>Profil Məlumatları</h3>
 
-        <div class="profile-section">
-          <img id="profilePic" src="img/default-avatar.png" alt="Profil şəkli" class="profile-pic" />
-          <input type="file" id="profileFile" accept="image/*" />
-          <button id="btnUploadPhoto" class="btn">Şəkli dəyiş</button>
-        </div>
+          <div class="profile-section">
+            <img id="profilePic" src="img/default-avatar.png" alt="Profil şəkli" class="profile-pic" />
+            <input type="file" id="profileFile" accept="image/*" />
+            <button id="btnUploadPhoto" class="btn">Şəkli dəyiş</button>
+          </div>
 
-        <div class="form-row">
-          <input type="email" id="newEmail" placeholder="Yeni email" />
-          <button id="btnChangeEmail" class="btn">Yenilə</button>
-        </div>
+          <div class="form-row">
+            <input type="email" id="newEmail" placeholder="Yeni email" />
+            <button id="btnChangeEmail" class="btn">Yenilə</button>
+          </div>
 
-        <div class="form-row">
-          <input type="password" id="newPass" placeholder="Yeni şifrə" />
-          <button id="btnChangePass" class="btn">Dəyiş</button>
-        </div>
+          <div class="form-row">
+            <input type="password" id="newPass" placeholder="Yeni şifrə" />
+            <button id="btnChangePass" class="btn">Dəyiş</button>
+          </div>
 
-        <div>
           <button id="btnDeleteAcc" class="btn btn-danger">Hesabı sil</button>
-        </div>
 
-        <p style="margin-top:10px; color:#555; font-size:14px;">
-          🕒 Son giriş: <span id="lastLogin">-</span>
-        </p>
-      </section>
+          <p style="margin-top:10px; color:#555; font-size:14px;">
+            🕒 Son giriş: <span id="lastLogin">-</span>
+          </p>
+        </section>
+      </div>
 
-      <!-- 🔹 SAĞ — TRAFİK PANELİ -->
-      <section class="panel">
-        <h3>Trafik Məlumatları</h3>
-        <p>Burada real vaxt trafik göstəriciləri və hadisə məlumatlarını görə bilərsiniz.</p>
+      <!-- 🔹 SAĞ PANEL -->
+      <div class="right-panel">
+        <section class="panel">
+          <h3>Trafik Məlumatları</h3>
+          <p>Burada real vaxt trafik göstəriciləri və hadisə məlumatlarını görə bilərsiniz.</p>
 
-        <div class="traffic-stats">
-          <div class="stat-box">
-            <div><strong id="stat-jams">4</strong></div>
-            <small>Aktiv tıxac</small>
+          <div class="traffic-stats">
+            <div class="stat-box">
+              <div><strong id="stat-jams">4</strong></div>
+              <small>Aktiv tıxac</small>
+            </div>
+            <div class="stat-box">
+              <div><strong id="stat-speed">42 km/saat</strong></div>
+              <small>Orta sürət</small>
+            </div>
+            <div class="stat-box">
+              <div><strong id="stat-updated">10:45</strong></div>
+              <small>Son yenilənmə</small>
+            </div>
           </div>
-          <div class="stat-box">
-            <div><strong id="stat-speed">42 km/saat</strong></div>
-            <small>Orta sürət</small>
-          </div>
-          <div class="stat-box">
-            <div><strong id="stat-updated">10:45</strong></div>
-            <small>Son yenilənmə</small>
-          </div>
-        </div>
 
-        <div class="traffic-list" id="trafficList">
-          <div class="traffic-item">
-            <strong>Böyük prospekt</strong> — yüksək sıxlıq (sev: 4) <br/>
-            <small>İş saatlarında tıxac müşahidə olunur.</small>
+          <div class="traffic-list" id="trafficList">
+            <div class="traffic-item">
+              <strong>Böyük prospekt</strong> — yüksək sıxlıq (sev: 4) <br/>
+              <small>İş saatlarında tıxac müşahidə olunur.</small>
+            </div>
+            <div class="traffic-item">
+              <strong>3-cü mikrorayon</strong> — orta sıxlıq (sev: 2) <br/>
+              <small>Axşam saatlarında yüklənmə artır.</small>
+            </div>
+            <div class="traffic-item">
+              <strong>Sahil yolu</strong> — az sıxlıq (sev: 1) <br/>
+              <small>Yol açıqdır, hərəkət normaldır.</small>
+            </div>
+            <div class="traffic-item">
+              <strong>Nizami küçəsi</strong> — yüksək sıxlıq (sev: 5) <br/>
+              <small>Qəza nəticəsində tıxac yaranıb.</small>
+            </div>
           </div>
-          <div class="traffic-item">
-            <strong>3-cü mikrorayon</strong> — orta sıxlıq (sev: 2) <br/>
-            <small>Axşam saatlarında yüklənmə artır.</small>
-          </div>
-          <div class="traffic-item">
-            <strong>Sahil yolu</strong> — az sıxlıq (sev: 1) <br/>
-            <small>Yol açıqdır, hərəkət normaldır.</small>
-          </div>
-          <div class="traffic-item">
-            <strong>Nizami küçəsi</strong> — yüksək sıxlıq (sev: 5) <br/>
-            <small>Qəza nəticəsində tıxac yaranıb.</small>
-          </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   </main>
 
@@ -223,12 +253,11 @@
     document.addEventListener("DOMContentLoaded", async () => {
       const user = await checkAuth(true);
       if (!user) return;
-
       document.getElementById("adminEmail").textContent = user.email;
+
       document.getElementById("logout").addEventListener("click", logout);
       document.getElementById("go-site").addEventListener("click", () => window.open("index.html", "_blank"));
 
-      // 🔹 Şifrə dəyiş
       document.getElementById("btnChangePass").addEventListener("click", () => {
         const np = document.getElementById("newPass").value.trim();
         if (np.length < 4) return alert("Şifrə ən azı 4 simvol olmalıdır");
@@ -239,7 +268,6 @@
         document.getElementById("newPass").value = "";
       });
 
-      // 🔹 Email dəyiş
       document.getElementById("btnChangeEmail").addEventListener("click", () => {
         const newEmail = document.getElementById("newEmail").value.trim();
         if (!newEmail.includes("@")) return alert("Zəhmət olmasa düzgün email daxil et");
@@ -250,7 +278,6 @@
         alert("✅ Email uğurla dəyişdirildi");
       });
 
-      // 🔹 Şəkil yükləmə (base64 formatda)
       const imgEl = document.getElementById("profilePic");
       const fileInput = document.getElementById("profileFile");
       const btnUpload = document.getElementById("btnUploadPhoto");
@@ -271,7 +298,6 @@
         reader.readAsDataURL(file);
       });
 
-      // 🔹 Hesabı sil
       document.getElementById("btnDeleteAcc").addEventListener("click", () => {
         if (confirm("Hesab silinsin? Bu əməliyyat geri alına bilməz.")) {
           localStorage.removeItem("urbanflow_user");
@@ -280,7 +306,6 @@
         }
       });
 
-      // 🔹 Son giriş tarixi
       const lastLogin = user.lastLogin || new Date().toLocaleString("az-AZ");
       document.getElementById("lastLogin").textContent = lastLogin;
       user.lastLogin = lastLogin;
