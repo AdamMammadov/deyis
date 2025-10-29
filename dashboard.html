@@ -7,15 +7,21 @@
 
   <link rel="stylesheet" href="css/style.css" />
   <style>
-    /* 🔹 Layout-u yuxarıdan-aşağıya düzülüşə çeviririk */
+    /* 🔹 İki sütunlu layout: solda profil, sağda trafik məlumatı */
     .admin-grid {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 20px;
       padding: 16px;
     }
 
-    .panel.small { padding: 12px }
+    @media (max-width: 768px) {
+      .admin-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel.small { padding: 16px; }
 
     .user-info {
       display: flex;
@@ -29,7 +35,7 @@
       flex-wrap: wrap;
     }
 
-    /* 🔹 Profil şəkli bölməsi */
+    /* 🔹 Profil hissəsi */
     .profile-section {
       display: flex;
       flex-direction: column;
@@ -38,8 +44,7 @@
       padding: 16px;
       border-radius: 8px;
       border: 1px solid #ccd3e2;
-      max-width: 300px;
-      margin: 0 auto;
+      margin-bottom: 16px;
     }
 
     .profile-pic {
@@ -73,6 +78,10 @@
       padding: 8px 12px;
       border-radius: 6px;
       cursor: pointer;
+    }
+
+    .btn-danger {
+      background: #b02020;
     }
 
     .traffic-stats {
@@ -114,10 +123,6 @@
       background: #0b3d91;
       color: #fff;
     }
-
-    @media (min-width: 768px) {
-      .admin-grid { max-width: 900px; margin: 0 auto; }
-    }
   </style>
 </head>
 
@@ -137,8 +142,7 @@
     </div>
 
     <div class="admin-grid">
-
-      <!-- 🔹 PROFIL ŞƏKLİ VƏ HESAB FUNKSİYALARI -->
+      <!-- 🔹 SOL — PROFİL və HESAB MƏLUMATLARI -->
       <section class="panel small">
         <h3>Profil Məlumatları</h3>
 
@@ -147,8 +151,6 @@
           <input type="file" id="profileFile" accept="image/*" />
           <button id="btnUploadPhoto" class="btn">Şəkli dəyiş</button>
         </div>
-
-        <hr style="margin:15px 0; border:none; border-top:1px solid #dce1ea;" />
 
         <div class="form-row">
           <input type="email" id="newEmail" placeholder="Yeni email" />
@@ -160,8 +162,8 @@
           <button id="btnChangePass" class="btn">Dəyiş</button>
         </div>
 
-        <div style="margin-top:10px;">
-          <button id="btnDeleteAcc" class="btn" style="background:#b02020;">Hesabı sil</button>
+        <div>
+          <button id="btnDeleteAcc" class="btn btn-danger">Hesabı sil</button>
         </div>
 
         <p style="margin-top:10px; color:#555; font-size:14px;">
@@ -169,7 +171,7 @@
         </p>
       </section>
 
-      <!-- 🔹 TRAFİK PANELİ aşağıda -->
+      <!-- 🔹 SAĞ — TRAFİK PANELİ -->
       <section class="panel">
         <h3>Trafik Məlumatları</h3>
         <p>Burada real vaxt trafik göstəriciləri və hadisə məlumatlarını görə bilərsiniz.</p>
@@ -248,7 +250,7 @@
         alert("✅ Email uğurla dəyişdirildi");
       });
 
-      // 🔹 Şəkil yükləmə (base64 saxlanacaq)
+      // 🔹 Şəkil yükləmə (base64 formatda)
       const imgEl = document.getElementById("profilePic");
       const fileInput = document.getElementById("profileFile");
       const btnUpload = document.getElementById("btnUploadPhoto");
