@@ -12,7 +12,6 @@
       font-family: "Segoe UI", sans-serif;
     }
 
-    /* 🔹 Əsas layout */
     .admin-grid {
       display: flex;
       align-items: flex-start;
@@ -29,7 +28,7 @@
     }
 
     .right-panel {
-      flex: 1;
+      flex: 2;
     }
 
     .panel {
@@ -40,6 +39,7 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
 
+    /* 🔹 Profil */
     .profile-section {
       display: flex;
       flex-direction: column;
@@ -85,45 +85,47 @@
     .btn-danger { background: #b02020; }
     .btn-danger:hover { background: #941b1b; }
 
+    /* 🔹 Trafik hissəsi */
     .traffic-stats {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin: 12px 0;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .stat-box {
+      flex: 1;
+      min-width: 150px;
       background: #f5f7fb;
       border: 1px solid #ccd3e2;
       border-radius: 8px;
       padding: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      text-align: center;
     }
 
     .traffic-list {
-      margin-top: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
     }
 
     .traffic-item {
       background: #f8fafc;
       border: 1px solid #d0d7e6;
-      border-left: 5px solid #0b3d91;
-      border-radius: 6px;
-      padding: 10px 12px;
-      transition: transform 0.2s, box-shadow 0.2s;
+      border-radius: 10px;
+      padding: 12px;
+      transition: 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     .traffic-item:hover {
-      transform: scale(1.01);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transform: translateY(-3px);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
     }
 
-    .traffic-item strong { color: #0b3d91; }
+    .traffic-item strong { color: #0b3d91; font-size: 15px; }
+    .traffic-item small { display: block; color: #555; margin-top: 4px; }
 
     .footer {
       text-align: center;
@@ -189,45 +191,57 @@
 
           <div class="traffic-stats">
             <div class="stat-box">
-              <div><strong id="stat-jams">4</strong> aktiv tıxac</div>
-              <div><strong id="stat-speed">42 km/saat</strong> — orta sürət</div>
-              <div><strong id="stat-updated">10:45</strong> — son yenilənmə</div>
+              <div><strong id="stat-jams">4</strong></div>
+              <small>Aktiv tıxac</small>
+            </div>
+            <div class="stat-box">
+              <div><strong id="stat-speed">42 km/saat</strong></div>
+              <small>Orta sürət</small>
+            </div>
+            <div class="stat-box">
+              <div><strong id="stat-updated">10:45</strong></div>
+              <small>Son yenilənmə</small>
             </div>
           </div>
 
           <div class="traffic-list" id="trafficList">
-            <div class="traffic-item" style="border-left-color:#e53935;">
-              <strong>Böyük prospekt</strong> — Yüksək sıxlıq (sev: 4) <br/>
-              <small>🕐 İş saatlarında güclü tıxac müşahidə olunur.</small><br/>
-              <small>🚗 Təxmini keçid vaxtı: <b>15 dəq</b></small><br/>
+            <div class="traffic-item" style="border-top:4px solid #e53935;">
+              <strong>Böyük prospekt</strong>
+              <small>Yüksək sıxlıq (sev: 4)</small>
+              <small>🕐 İş saatlarında güclü tıxac müşahidə olunur.</small>
+              <small>🚗 Təxmini keçid vaxtı: <b>15 dəq</b></small>
               <small>💡 Səbəb: Qəza və daralma zonası</small>
             </div>
 
-            <div class="traffic-item" style="border-left-color:#f9a825;">
-              <strong>3-cü mikrorayon</strong> — Orta sıxlıq (sev: 2) <br/>
-              <small>🕒 Axşam saatlarında yüklənmə artır.</small><br/>
-              <small>🚗 Təxmini keçid vaxtı: <b>8 dəq</b></small><br/>
+            <div class="traffic-item" style="border-top:4px solid #f9a825;">
+              <strong>3-cü mikrorayon</strong>
+              <small>Orta sıxlıq (sev: 2)</small>
+              <small>🕒 Axşam saatlarında yüklənmə artır.</small>
+              <small>🚗 Təxmini keçid vaxtı: <b>8 dəq</b></small>
               <small>💡 Səbəb: Avtobus dayanacaqlarında sıxlıq</small>
             </div>
 
-            <div class="traffic-item" style="border-left-color:#43a047;">
-              <strong>Sahil yolu</strong> — Açıq (sev: 1) <br/>
-              <small>🌤️ Yol açıqdır, hərəkət normaldır.</small><br/>
-              <small>🚗 Təxmini keçid vaxtı: <b>3 dəq</b></small><br/>
-              <small>💡 Səbəb: Hərəkət sabit, sıxlıq yoxdur</small>
+            <div class="traffic-item" style="border-top:4px solid #43a047;">
+              <strong>Sahil yolu</strong>
+              <small>Açıq (sev: 1)</small>
+              <small>🌤️ Yol açıqdır, hərəkət normaldır.</small>
+              <small>🚗 Təxmini keçid vaxtı: <b>3 dəq</b></small>
+              <small>💡 Səbəb: Sabit nəqliyyat axını</small>
             </div>
 
-            <div class="traffic-item" style="border-left-color:#1e88e5;">
-              <strong>Heydər Əliyev prospekti</strong> — Orta sıxlıq (sev: 3) <br/>
-              <small>🕕 Pik saatlarda yavaşlama müşahidə olunur.</small><br/>
-              <small>🚗 Təxmini keçid vaxtı: <b>10 dəq</b></small><br/>
-              <small>💡 Səbəb: Svetoform dövrləri və yüksək nəqliyyat axını</small>
+            <div class="traffic-item" style="border-top:4px solid #1e88e5;">
+              <strong>Heydər Əliyev prospekti</strong>
+              <small>Orta sıxlıq (sev: 3)</small>
+              <small>🕕 Pik saatlarda yavaşlama müşahidə olunur.</small>
+              <small>🚗 Təxmini keçid vaxtı: <b>10 dəq</b></small>
+              <small>💡 Səbəb: Svetoform dövrləri və nəqliyyat axını</small>
             </div>
 
-            <div class="traffic-item" style="border-left-color:#d32f2f;">
-              <strong>Nizami küçəsi</strong> — Çox yüksək sıxlıq (sev: 5) <br/>
-              <small>🚧 Qəza nəticəsində tıxac yaranıb.</small><br/>
-              <small>🚗 Təxmini keçid vaxtı: <b>20 dəq</b></small><br/>
+            <div class="traffic-item" style="border-top:4px solid #d32f2f;">
+              <strong>Nizami küçəsi</strong>
+              <small>Çox yüksək sıxlıq (sev: 5)</small>
+              <small>🚧 Qəza nəticəsində tıxac yaranıb.</small>
+              <small>🚗 Təxmini keçid vaxtı: <b>20 dəq</b></small>
               <small>💡 Səbəb: Qəza və tıxac zonasının genişlənməsi</small>
             </div>
           </div>
